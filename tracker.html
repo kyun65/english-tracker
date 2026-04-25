@@ -367,7 +367,7 @@ const setV = d => { _vocab = d; if (_user) db.collection('users').doc(_user.uid)
 const todayStr = () => new Date().toISOString().slice(0,10);
 
 function signInWithGoogle() {
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => alert('ログインに失敗しました: ' + e.message));
+  auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()).catch(e => alert('ログインに失敗しました: ' + e.message));
 }
 function signOutUser() {
   if (confirm('ログアウトしますか？')) auth.signOut();
