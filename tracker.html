@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>English Learning Tracker</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -160,6 +161,8 @@
     .pos-other { background: rgba(139,148,158,.15); color: var(--muted); }
     .icon-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
     .icon-btn:hover { border-color: var(--red); color: var(--red); }
+    .material-icons { font-size: inherit; vertical-align: middle; line-height: 1; }
+    .icon-btn .material-icons, .audio-btn .material-icons { font-size: 17px; }
     .section-heading { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 10px 0 8px; }
     .pager { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
     .pager-btn { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
@@ -226,7 +229,7 @@
 
 <!-- Login overlay -->
 <div id="login-overlay" style="position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000">
-  <div style="font-size:56px;margin-bottom:16px">📚</div>
+  <span class="material-icons" style="font-size:56px;color:var(--blue);margin-bottom:16px;display:block">menu_book</span>
   <h1 style="font-size:22px;font-weight:800;margin-bottom:8px">English Learning Tracker</h1>
   <p style="color:var(--muted);font-size:13px;margin-bottom:32px">ログインしてどこからでも学習記録を確認</p>
   <button onclick="signInWithGoogle()" style="display:flex;align-items:center;gap:10px;background:#fff;color:#333;border:none;border-radius:10px;padding:13px 28px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)">
@@ -242,7 +245,7 @@
 </div>
 
 <nav class="tab-bar">
-  <div class="sidebar-logo" style="display:none">📚 English</div>
+  <div class="sidebar-logo" style="display:none"><span class="material-icons" style="color:var(--blue)">menu_book</span> English</div>
   <button class="tab-btn active" data-tab="home" onclick="showTab('home')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     ホーム
@@ -260,8 +263,8 @@
 <!-- HOME -->
 <div class="tab-content active" id="tab-home">
   <div class="page-header">
-    <div><h1>📚 English Learning</h1><div class="sub" id="h-date"></div></div>
-    <div class="streak-badge">🔥 <span id="h-streak">0</span>日連続</div>
+    <div><h1><span class="material-icons" style="color:var(--blue);vertical-align:middle;margin-right:6px">menu_book</span>English Learning</h1><div class="sub" id="h-date"></div></div>
+    <div class="streak-badge"><span class="material-icons" style="color:var(--red);font-size:18px">local_fire_department</span> <span id="h-streak">0</span>日連続</div>
   </div>
   <div class="remaining-banner" id="rem-banner">
     <div class="rem-label" id="rem-label">今日の残り学習時間</div>
@@ -310,8 +313,8 @@
       <div class="fg">
         <label>ラジオ英会話</label>
         <div class="toggle-row">
-          <button class="tbtn on" id="btn-yes" onclick="setRadio(true)">✓ やった</button>
-          <button class="tbtn" id="btn-no" onclick="setRadio(false)">✗ なし</button>
+          <button class="tbtn on" id="btn-yes" onclick="setRadio(true)"><span class="material-icons" style="font-size:14px">check</span> やった</button>
+          <button class="tbtn" id="btn-no" onclick="setRadio(false)"><span class="material-icons" style="font-size:14px">close</span> なし</button>
         </div>
       </div>
       <button class="btn btn-blue" onclick="saveRecord()">記録する</button>
@@ -478,7 +481,7 @@ function renderHome() {
   else { rc.textContent='—'; rc.className='radio-circle'; document.getElementById('ps-radio').textContent='未完了'; }
 
   const rem = Math.max(0, GOAL_MIN-(rec.mins||0));
-  document.getElementById('rem-val').textContent = rem===0 ? '目標達成！🎉' : `あと ${rem}分`;
+  document.getElementById('rem-val').textContent = rem===0 ? '目標達成！' : `あと ${rem}分`;
   document.getElementById('rem-val').style.color = rem===0 ? 'var(--green)' : 'var(--blue)';
   document.getElementById('rem-label').textContent = rem===0 ? '今日の学習' : '今日の残り学習時間';
 
@@ -600,7 +603,7 @@ function initSession() {
 function renderFC() {
   const v=getV(), el=document.getElementById('vtab-fc');
   if(!v.length){
-    el.innerHTML=`<div class="card" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">📖</div><div style="font-size:16px;font-weight:700;margin-bottom:8px">まだ単語がありません</div><div style="font-size:13px;color:var(--muted);margin-bottom:20px">「単語を追加」から登録してください</div><button class="btn btn-blue" onclick="showVTab('add')">単語を追加する</button></div>`;
+    el.innerHTML=`<div class="card" style="text-align:center;padding:40px"><span class="material-icons" style="font-size:48px;color:var(--muted);margin-bottom:16px;display:block">menu_book</span><div style="font-size:16px;font-weight:700;margin-bottom:8px">まだ単語がありません</div><div style="font-size:13px;color:var(--muted);margin-bottom:20px">「単語を追加」から登録してください</div><button class="btn btn-blue" onclick="showVTab('add')">単語を追加する</button></div>`;
     return;
   }
   if(!session.length || sIdx>=session.length) { initSession(); }
@@ -615,10 +618,10 @@ function renderFC() {
         <div class="card-inner ${sFlipped?'flipped':''}" id="c-inner">
           <div class="card-face">
             ${w.img?`
-              <div id="fc-img-ph" style="width:100%;height:130px;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:12px;color:var(--muted)">🖼 画像を読み込み中...</div>
+              <div id="fc-img-ph" style="width:100%;height:130px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;margin-bottom:12px;color:var(--muted)"><span class="material-icons" style="font-size:14px">image</span>&nbsp;画像を読み込み中...</div>
               <img id="fc-img" src="${w.img}" style="display:none;width:100%;height:130px;object-fit:cover;border-radius:10px;margin-bottom:12px"
                 onload="document.getElementById('fc-img-ph').style.display='none';this.style.display='block'"
-                onerror="document.getElementById('fc-img-ph').innerHTML='🖼';document.getElementById('fc-img-ph').style.fontSize='32px'">
+                onerror="document.getElementById('fc-img-ph').innerHTML='<span class=\'material-icons\' style=\'font-size:32px\'>image</span>';">
             `:''}
             <div class="card-word" style="font-size:${w.img?'26px':'34px'}">${esc(w.en)}</div>
             ${w.pos?posBadge(w.pos):''}
@@ -628,8 +631,8 @@ function renderFC() {
             <div class="card-ja">${esc(w.ja)}</div>
             ${w.example?`<div class="card-ex">${esc(w.example)}</div>`:''}
             <div class="audio-row">
-              <button class="audio-btn" onclick="event.stopPropagation();speakW('en')" title="英語を聞く">🔊</button>
-              ${w.example?`<button class="audio-btn" onclick="event.stopPropagation();speakW('ex')" title="例文を聞く">📢</button>`:''}
+              <button class="audio-btn" onclick="event.stopPropagation();speakW('en')" title="英語を聞く"><span class="material-icons">volume_up</span></button>
+              ${w.example?`<button class="audio-btn" onclick="event.stopPropagation();speakW('ex')" title="例文を聞く"><span class="material-icons">campaign</span></button>`:''}
             </div>
           </div>
         </div>
@@ -670,7 +673,7 @@ function skip() { sIdx++; sFlipped=false; if(sIdx>=session.length) renderSession
 function renderSessionDone() {
   const v=getV(), m=v.filter(x=>x.mastered).length;
   document.getElementById('vtab-fc').innerHTML=`
-    <div class="session-done"><div class="big">🎉</div><h2>セッション完了！</h2>
+    <div class="session-done"><span class="material-icons big" style="display:block">celebration</span><h2>セッション完了！</h2>
     <p>全${session.length}単語を確認しました<br>マスター済み: ${m}/${v.length}単語</p>
     <button class="btn btn-green" onclick="initSession();renderFC()">もう一度やる</button></div>`;
 }
@@ -682,8 +685,8 @@ function renderList() {
   if(listPage>=pages) listPage=Math.max(0,pages-1);
   const slice=v.slice(listPage*LIST_PER,(listPage+1)*LIST_PER);
   const thumb=w=>w.img
-    ?`<img class="word-thumb" src="${w.img}" onerror="this.outerHTML='<div class=\'word-thumb-ph\'>🔤</div>'">`
-    :`<div class="word-thumb-ph">🔤</div>`;
+    ?`<img class="word-thumb" src="${w.img}" onerror="this.outerHTML='<div class=\'word-thumb-ph\'><span class=\'material-icons\' style=\'font-size:22px\'>abc</span></div>'">`
+    :`<div class="word-thumb-ph"><span class="material-icons" style="font-size:22px">abc</span></div>`;
   const row=w=>`<div class="word-item ${w.mastered?'mastered-item':''}">
     ${thumb(w)}
     <div class="word-info">
@@ -696,9 +699,9 @@ function renderList() {
       ${w.example?`<div class="word-ex">"${esc(w.example)}"</div>`:''}
     </div>
     <div class="word-actions">
-      <button class="icon-btn" onclick="speak('${w.en.replace(/'/g,"\\'")}')">🔊</button>
-      <button class="icon-btn" onclick="toggleM(${w.id})">⇄</button>
-      <button class="icon-btn" onclick="delWord(${w.id})">🗑</button>
+      <button class="icon-btn" onclick="speak('${w.en.replace(/'/g,"\\'")}')"><span class="material-icons">volume_up</span></button>
+      <button class="icon-btn" onclick="toggleM(${w.id})"><span class="material-icons">sync_alt</span></button>
+      <button class="icon-btn" onclick="delWord(${w.id})"><span class="material-icons">delete</span></button>
     </div>
   </div>`;
   const pager=pages>1?`<div class="pager">
