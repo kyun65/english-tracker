@@ -700,6 +700,7 @@ function renderList() {
     </div>
     <div class="word-actions">
       <button class="icon-btn" onclick="speak('${w.en.replace(/'/g,"\\'")}')"><span class="material-icons">volume_up</span></button>
+      ${w.example?`<button class="icon-btn" onclick="speak('${w.example.replace(/'/g,"\\'")}')"><span class="material-icons">campaign</span></button>`:''}
       <button class="icon-btn" onclick="toggleM(${w.id})"><span class="material-icons">sync_alt</span></button>
       <button class="icon-btn" onclick="delWord(${w.id})"><span class="material-icons">delete</span></button>
     </div>
@@ -721,28 +722,25 @@ function goPage(p) {
   document.getElementById('vtab-list').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-let _enVoice = null;
-function _loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  _enVoice = voices.find(v => v.lang === 'en-US' && v.localService)
-          || voices.find(v => v.lang === 'en-GB' && v.localService)
-          || voices.find(v => v.lang.startsWith('en') && v.localService)
-          || voices.find(v => v.lang.startsWith('en'))
-          || null;
-}
-if (window.speechSynthesis) {
-  _loadVoices();
-  speechSynthesis.onvoiceschanged = _loadVoices;
-}
+let _currentAudio = null;
 
-function speak(text, lang='en-US') {
-  if(!window.speechSynthesis || !text) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang;
-  u.rate = 0.85;
-  if (_enVoice) u.voice = _enVoice;
-  speechSynthesis.speak(u);
+async function speak(text) {
+  if (!text) return;
+  if (_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
+  try {
+    const url = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=en-US&client=tw-ob&q=' + encodeURIComponent(text);
+    const audio = new Audio(url);
+    audio.playbackRate = 0.9;
+    _currentAudio = audio;
+    await audio.play();
+  } catch(e) {
+    // fallback: Web Speech API
+    if (!window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US'; u.rate = 0.85;
+    speechSynthesis.speak(u);
+  }
 }
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
