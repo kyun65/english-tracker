@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Learning Tracker</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --bg2: #161b22; --bg3: #1c2129;
+      --border: #30363d; --text: #e6edf3; --muted: #8b949e;
+      --green: #39d353; --blue: #58a6ff; --yellow: #e3b341;
+      --purple: #bc8cff; --red: #f85149;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Tab bar */
+    .tab-bar { position: sticky; top: 0; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; z-index: 50; }
+    .tab-btn { flex: 1; padding: 14px 8px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--blue); }
+    .tab-content { display: none; padding: 20px 16px; max-width: 820px; margin: 0 auto; }
+    .tab-content.active { display: block; }
+
+    /* Shared */
+    .card { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 14px; }
+    .card-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 16px; }
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .2s; white-space: nowrap; }
+    .btn:hover { opacity: .85; }
+    .btn-blue { background: var(--blue); color: #fff; }
+    .btn-green { background: var(--green); color: #0d1117; }
+    .btn-gray { background: var(--bg2); border: 1px solid var(--border); color: var(--text); }
+    .fg label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .fg input[type=number], .fg input[type=text], .fg textarea {
+      width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 12px; color: var(--text); font-size: 14px; outline: none; transition: border-color .2s; font-family: inherit;
+    }
+    .fg input:focus, .fg textarea:focus { border-color: var(--blue); }
+
+    /* Home */
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .page-header h1 { font-size: 18px; font-weight: 700; }
+    .page-header .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .streak-badge { display: flex; align-items: center; gap: 6px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 14px; font-weight: 700; }
+    .remaining-banner { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg,rgba(88,166,255,.08),rgba(188,140,255,.08)); border: 1px solid rgba(88,166,255,.25); border-radius: 12px; padding: 14px 20px; margin-bottom: 14px; }
+    .rem-label { font-size: 13px; color: var(--muted); }
+    .rem-value { font-size: 22px; font-weight: 800; color: var(--blue); }
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+    .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 10px; text-align: center; }
+    .stat-value { font-size: 22px; font-weight: 800; line-height: 1.1; }
+    .stat-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .progress-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .progress-item { text-align: center; }
+    .ring-wrap { position: relative; width: 84px; height: 84px; margin: 0 auto 10px; }
+    .ring-svg { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: var(--bg2); stroke-width: 7; }
+    .ring-fill { fill: none; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+    .ring-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .ring-val { font-size: 20px; font-weight: 800; line-height: 1; }
+    .ring-unit { font-size: 10px; color: var(--muted); }
+    .p-label { font-size: 12px; font-weight: 600; }
+    .p-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .radio-circle { width: 84px; height: 84px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 30px; border: 3px solid var(--border); color: var(--muted); transition: all .3s; }
+    .radio-circle.done { border-color: var(--green); background: rgba(57,211,83,.1); color: var(--green); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+    .toggle-row { display: flex; gap: 6px; }
+    .tbtn { flex: 1; padding: 9px 6px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--muted); font-size: 13px; cursor: pointer; transition: all .2s; }
+    .tbtn.on { border-color: var(--green); background: rgba(57,211,83,.12); color: var(--green); font-weight: 700; }
+    .week-chart { display: grid; grid-template-columns: repeat(7,1fr); gap: 8px; align-items: end; height: 90px; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+    .bar { width: 100%; border-radius: 4px 4px 0 0; background: rgba(88,166,255,.5); min-height: 3px; transition: height .4s ease; }
+    .bar.today-bar { background: var(--green); }
+    .bar.empty-bar { background: var(--bg2); border: 1px solid var(--border); }
+    .bar-day { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .bar-val { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+    /* Calendar */
+    .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .cal-title { font-size: 18px; font-weight: 700; }
+    .cal-nav-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+    .cal-nav-btn:hover { background: var(--bg3); }
+    .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+    .cal-dow { text-align: center; font-size: 11px; color: var(--muted); font-weight: 700; padding: 6px 0; }
+    .cal-day { min-height: 72px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 6px; cursor: pointer; transition: border-color .2s; }
+    .cal-day:hover { border-color: var(--blue); }
+    .cal-day.other-month { opacity: .3; pointer-events: none; }
+    .cal-day.today-cell { border-color: var(--blue); }
+    .cal-day.selected-cell { border-color: var(--green); background: rgba(57,211,83,.04); }
+    .cal-day.future-cell { opacity: .35; pointer-events: none; }
+    .cal-day-num { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .today-cell .cal-day-num { color: var(--blue); }
+    .cal-dots { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
+    .cal-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .cal-mins { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .day-detail { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 14px; }
+    .day-detail h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .detail-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+    .detail-stat { background: var(--bg2); border-radius: 8px; padding: 10px; text-align: center; }
+    .detail-stat-val { font-size: 20px; font-weight: 700; }
+    .detail-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .note-area { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 14px; resize: vertical; min-height: 80px; outline: none; font-family: inherit; transition: border-color .2s; }
+    .note-area:focus { border-color: var(--blue); }
+    .note-label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+
+    /* Vocab */
+    .vtabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .vtab-btn { padding: 8px 18px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg2); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+    .vtab-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .vocab-prog-bar { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 14px; }
+    .vp-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .vp-title { font-size: 14px; font-weight: 700; }
+    .vp-count { font-size: 13px; color: var(--muted); }
+    .pbar-bg { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+    .pbar-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width .4s ease; }
+
+    /* Flashcard */
+    .fc-area { perspective: 1000px; margin-bottom: 16px; }
+    .flashcard { position: relative; height: 220px; cursor: pointer; user-select: none; }
+    .card-inner { position: absolute; inset: 0; transition: transform .4s ease; transform-style: preserve-3d; }
+    .card-inner.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; inset: 0; backface-visibility: hidden; background: var(--bg3); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+    .card-back { transform: rotateY(180deg); background: rgba(88,166,255,.04); border-color: rgba(88,166,255,.25); }
+    .card-word { font-size: 34px; font-weight: 800; margin-bottom: 8px; }
+    .card-hint { font-size: 12px; color: var(--muted); }
+    .card-ja { font-size: 26px; font-weight: 700; color: var(--blue); margin-bottom: 10px; }
+    .card-ex { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 360px; }
+    .audio-row { display: flex; gap: 8px; margin-top: 12px; }
+    .audio-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg2); color: var(--muted); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+    .audio-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .fc-actions { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+    .fc-counter { text-align: center; font-size: 13px; color: var(--muted); }
+    .judge-btn { padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .2s; border: 1px solid; }
+    .judge-btn:hover { opacity: .8; }
+    .judge-no { background: rgba(248,81,73,.1); border-color: var(--red); color: var(--red); }
+    .judge-yes { background: rgba(57,211,83,.1); border-color: var(--green); color: var(--green); }
+    .skip-row { text-align: center; margin-top: 8px; }
+    .session-done { text-align: center; padding: 40px 20px; }
+    .session-done .big { font-size: 48px; margin-bottom: 16px; }
+    .session-done h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .session-done p { color: var(--muted); margin-bottom: 24px; }
+
+    /* Word list */
+    .word-list { display: flex; flex-direction: column; gap: 8px; }
+    .word-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px; }
+    .word-item.mastered-item { border-color: rgba(57,211,83,.25); }
+    .word-info { flex: 1; min-width: 0; }
+    .word-en { font-size: 15px; font-weight: 700; }
+    .word-ja { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .word-ex { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
+    .word-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .mastered-tag { font-size: 11px; padding: 3px 8px; border-radius: 10px; background: rgba(57,211,83,.1); border: 1px solid var(--green); color: var(--green); }
+    .pos-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 10px; margin-bottom: 6px; }
+    .pos-動詞, .pos-他動詞, .pos-自動詞 { background: rgba(88,166,255,.15); color: var(--blue); }
+    .pos-名詞 { background: rgba(57,211,83,.15); color: var(--green); }
+    .pos-形容詞 { background: rgba(227,179,65,.15); color: var(--yellow); }
+    .pos-副詞 { background: rgba(188,140,255,.15); color: var(--purple); }
+    .pos-other { background: rgba(139,148,158,.15); color: var(--muted); }
+    .icon-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+    .icon-btn:hover { border-color: var(--red); color: var(--red); }
+    .section-heading { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 10px 0 8px; }
+    .pager { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+    .pager-btn { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+    .pager-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+    .pager-btn:disabled { opacity: .3; cursor: default; }
+    .pager-info { font-size: 12px; color: var(--muted); text-align: center; }
+    .word-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+    .word-thumb-ph { width: 64px; height: 64px; border-radius: 8px; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+
+    /* Add form */
+    .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .add-grid .fg-full { grid-column: span 2; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--green); color: #0d1117; padding: 10px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; transition: transform .3s ease; z-index: 300; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 500px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .form-grid { grid-template-columns: 1fr 1fr; }
+      .form-grid > .btn { grid-column: span 2; }
+      .cal-day { min-height: 54px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Login overlay -->
+<div id="login-overlay" style="position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000">
+  <div style="font-size:56px;margin-bottom:16px">📚</div>
+  <h1 style="font-size:22px;font-weight:800;margin-bottom:8px">English Learning Tracker</h1>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:32px">ログインしてどこからでも学習記録を確認</p>
+  <button onclick="signInWithGoogle()" style="display:flex;align-items:center;gap:10px;background:#fff;color:#333;border:none;border-radius:10px;padding:13px 28px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)">
+    <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+    Googleでログイン
+  </button>
+</div>
+
+<!-- User bar -->
+<div id="user-bar" style="display:none;position:fixed;top:0;right:0;padding:6px 12px;z-index:200;align-items:center;gap:8px">
+  <span id="user-name" style="font-size:11px;color:var(--muted)"></span>
+  <button onclick="signOutUser()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--muted);font-size:11px;cursor:pointer">ログアウト</button>
+</div>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="home" onclick="showTab('home')">🏠 ホーム</button>
+  <button class="tab-btn" data-tab="calendar" onclick="showTab('calendar')">📅 カレンダー</button>
+  <button class="tab-btn" data-tab="vocab" onclick="showTab('vocab')">📖 ユメタン</button>
+</nav>
+
+<!-- HOME -->
+<div class="tab-content active" id="tab-home">
+  <div class="page-header">
+    <div><h1>📚 English Learning</h1><div class="sub" id="h-date"></div></div>
+    <div class="streak-badge">🔥 <span id="h-streak">0</span>日連続</div>
+  </div>
+  <div class="remaining-banner" id="rem-banner">
+    <div class="rem-label" id="rem-label">今日の残り学習時間</div>
+    <div class="rem-value" id="rem-val"></div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value" id="s-days" style="color:var(--green)">0</div><div class="stat-label">累計学習日数</div></div>
+    <div class="stat-card"><div class="stat-value" id="s-mins" style="color:var(--blue)">0</div><div class="stat-label">累計学習(分)</div></div>
+    <div class="stat-card"><div class="stat-value" id="s-words" style="color:var(--yellow)">0</div><div class="stat-label">累計単語数</div></div>
+    <div class="stat-card"><div class="stat-value" id="s-radio" style="color:var(--purple)">0</div><div class="stat-label">ラジオ完了日</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">今日の進捗</div>
+    <div class="progress-grid">
+      <div class="progress-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" width="84" height="84" viewBox="0 0 84 84">
+            <circle class="ring-bg" cx="42" cy="42" r="35"/>
+            <circle class="ring-fill" id="r-min" cx="42" cy="42" r="35" stroke="var(--blue)" stroke-dasharray="219.9" stroke-dashoffset="219.9"/>
+          </svg>
+          <div class="ring-inner"><div class="ring-val" id="v-min" style="color:var(--blue)">0</div><div class="ring-unit">分</div></div>
+        </div>
+        <div class="p-label">学習時間</div><div class="p-sub" id="ps-min">目標 30分</div>
+      </div>
+      <div class="progress-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" width="84" height="84" viewBox="0 0 84 84">
+            <circle class="ring-bg" cx="42" cy="42" r="35"/>
+            <circle class="ring-fill" id="r-words" cx="42" cy="42" r="35" stroke="var(--yellow)" stroke-dasharray="219.9" stroke-dashoffset="219.9"/>
+          </svg>
+          <div class="ring-inner"><div class="ring-val" id="v-words" style="color:var(--yellow)">0</div><div class="ring-unit">単語</div></div>
+        </div>
+        <div class="p-label">ユメタン</div><div class="p-sub" id="ps-words">目標 10単語</div>
+      </div>
+      <div class="progress-item">
+        <div class="radio-circle" id="v-radio">—</div>
+        <div class="p-label">ラジオ英会話</div><div class="p-sub" id="ps-radio">未完了</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">学習を記録する</div>
+    <div class="form-grid">
+      <div class="fg"><label>学習時間（分）</label><input type="number" id="i-min" min="0" max="180" placeholder="30"></div>
+      <div class="fg"><label>ユメタン（単語数）</label><input type="number" id="i-words" min="0" max="500" placeholder="10"></div>
+      <div class="fg">
+        <label>ラジオ英会話</label>
+        <div class="toggle-row">
+          <button class="tbtn on" id="btn-yes" onclick="setRadio(true)">✓ やった</button>
+          <button class="tbtn" id="btn-no" onclick="setRadio(false)">✗ なし</button>
+        </div>
+      </div>
+      <button class="btn btn-blue" onclick="saveRecord()">記録する</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">今週の学習時間</div>
+    <div class="week-chart" id="h-week"></div>
+  </div>
+</div>
+
+<!-- CALENDAR -->
+<div class="tab-content" id="tab-calendar">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+    <div class="cal-title" id="cal-title"></div>
+    <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <div id="day-detail"></div>
+</div>
+
+<!-- VOCAB -->
+<div class="tab-content" id="tab-vocab">
+  <div class="vtabs">
+    <button class="vtab-btn active" onclick="showVTab('fc')">フラッシュカード</button>
+    <button class="vtab-btn" onclick="showVTab('list')">単語リスト</button>
+    <button class="vtab-btn" onclick="showVTab('add')">単語を追加</button>
+  </div>
+  <div class="vocab-prog-bar" id="v-prog"></div>
+  <div id="vtab-fc"></div>
+  <div id="vtab-list" style="display:none"></div>
+  <div id="vtab-add" style="display:none">
+    <div class="card">
+      <div class="card-title">1件追加</div>
+      <div class="add-grid">
+        <div class="fg"><label>英語</label><input type="text" id="a-en" placeholder="run"></div>
+        <div class="fg"><label>日本語</label><input type="text" id="a-ja" placeholder="走る"></div>
+        <div class="fg">
+          <label>品詞（自動取得）</label>
+          <select id="a-pos" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none">
+            <option value="">---</option>
+            <option value="名詞">名詞</option>
+            <option value="動詞">動詞</option>
+            <option value="他動詞">他動詞</option>
+            <option value="自動詞">自動詞</option>
+            <option value="形容詞">形容詞</option>
+            <option value="副詞">副詞</option>
+            <option value="前置詞">前置詞</option>
+            <option value="接続詞">接続詞</option>
+          </select>
+        </div>
+        <div class="fg fg-full"><label>例文（自動生成）</label><input type="text" id="a-ex" placeholder="追加ボタンで自動生成されます"></div>
+      </div>
+      <button class="btn btn-blue" onclick="addWord()">追加する</button>
+    </div>
+    <div class="card" style="margin-top:0">
+      <div class="card-title">CSVで一括インポート</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">形式: <code style="background:var(--bg2);padding:2px 6px;border-radius:4px;font-size:12px">英語,日本語,例文（任意）</code></p>
+      <div class="fg"><textarea id="csv-in" placeholder="run,走る,I run every morning.&#10;happy,幸せな,She looks very happy today." style="min-height:120px;font-family:monospace;font-size:13px"></textarea></div>
+      <button class="btn btn-gray" style="margin-top:10px;width:100%" onclick="importCSV()">インポートする</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GOAL_MIN = 30, GOAL_WORDS = 10;
+const DJ = ['日','月','火','水','木','金','土'];
+const MJ = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+// Firebase
+firebase.initializeApp({
+  apiKey: "AIzaSyDlYSZvajsnxvLUAju2CrL8rdwkV2IqbKQ",
+  authDomain: "english-tracker-142e6.firebaseapp.com",
+  projectId: "english-tracker-142e6",
+  storageBucket: "english-tracker-142e6.firebasestorage.app",
+  messagingSenderId: "468899271845",
+  appId: "1:468899271845:web:0c45ac8e7f75c0e26a294c"
+});
+const auth = firebase.auth();
+const db = firebase.firestore();
+let _user = null, _study = {}, _vocab = [];
+
+const getS = () => _study;
+const setS = d => { _study = d; if (_user) db.collection('users').doc(_user.uid).collection('d').doc('s').set({r: d}).catch(() => {}); };
+const getV = () => _vocab;
+const setV = d => { _vocab = d; if (_user) db.collection('users').doc(_user.uid).collection('d').doc('v').set({l: d}).catch(() => {}); };
+const todayStr = () => new Date().toISOString().slice(0,10);
+
+function signInWithGoogle() {
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => alert('ログインに失敗しました: ' + e.message));
+}
+function signOutUser() {
+  if (confirm('ログアウトしますか？')) auth.signOut();
+}
+
+let radioVal = true;
+let calY, calM, selDay = null;
+let session = [], sIdx = 0, sFlipped = false;
+let activeVTab = 'fc';
+let listPage = 0;
+const LIST_PER = 20;
+
+// ── Tab switching ──
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  if (tab === 'home') renderHome();
+  if (tab === 'calendar') renderCalendar();
+  if (tab === 'vocab') renderVocab();
+}
+
+function showToast(msg = '✓ 記録しました！') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Home ──
+function setRadio(v) {
+  radioVal = v;
+  document.getElementById('btn-yes').classList.toggle('on', v);
+  document.getElementById('btn-no').classList.toggle('on', !v);
+}
+
+function renderHome() {
+  const data = getS(), t = todayStr(), now = new Date();
+  document.getElementById('h-date').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${DJ[now.getDay()]}）`;
+
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const r = data[d.toISOString().slice(0,10)];
+    if (r && (r.mins > 0 || r.words > 0 || r.radio)) streak++; else break;
+  }
+  document.getElementById('h-streak').textContent = streak;
+
+  let days=0, mins=0, words=0, radio=0;
+  for (const v of Object.values(data)) {
+    if (v.mins>0||v.words>0||v.radio) days++;
+    mins+=v.mins||0; words+=v.words||0; if(v.radio) radio++;
+  }
+  document.getElementById('s-days').textContent = days;
+  document.getElementById('s-mins').textContent = mins;
+  document.getElementById('s-words').textContent = words;
+  document.getElementById('s-radio').textContent = radio;
+
+  const rec = data[t] || {mins:0,words:0,radio:false};
+  const C = 219.9;
+  document.getElementById('r-min').style.strokeDashoffset = C*(1-Math.min((rec.mins||0)/GOAL_MIN,1));
+  document.getElementById('v-min').textContent = rec.mins||0;
+  document.getElementById('ps-min').textContent = (rec.mins||0)>=GOAL_MIN?'✓ 達成！':`目標 ${GOAL_MIN}分`;
+  document.getElementById('r-words').style.strokeDashoffset = C*(1-Math.min((rec.words||0)/GOAL_WORDS,1));
+  document.getElementById('v-words').textContent = rec.words||0;
+  document.getElementById('ps-words').textContent = (rec.words||0)>=GOAL_WORDS?'✓ 達成！':`目標 ${GOAL_WORDS}単語`;
+
+  const rc = document.getElementById('v-radio');
+  if (rec.radio) { rc.textContent='✓'; rc.className='radio-circle done'; document.getElementById('ps-radio').textContent='完了！'; }
+  else { rc.textContent='—'; rc.className='radio-circle'; document.getElementById('ps-radio').textContent='未完了'; }
+
+  const rem = Math.max(0, GOAL_MIN-(rec.mins||0));
+  document.getElementById('rem-val').textContent = rem===0 ? '目標達成！🎉' : `あと ${rem}分`;
+  document.getElementById('rem-val').style.color = rem===0 ? 'var(--green)' : 'var(--blue)';
+  document.getElementById('rem-label').textContent = rem===0 ? '今日の学習' : '今日の残り学習時間';
+
+  const el = document.getElementById('h-week'); el.innerHTML = '';
+  const maxM = Math.max(...Array.from({length:7},(_,i)=>{const d=new Date(now);d.setDate(d.getDate()-(6-i));return data[d.toISOString().slice(0,10)]?.mins||0;}),GOAL_MIN,1);
+  for (let i=6;i>=0;i--) {
+    const d=new Date(now); d.setDate(d.getDate()-i);
+    const k=d.toISOString().slice(0,10), m=data[k]?.mins||0, isT=k===t, isFut=k>t;
+    const pct=isFut?0:Math.max((m/maxM)*100,m>0?8:4);
+    const col=document.createElement('div'); col.className='bar-col';
+    col.innerHTML=`<div class="bar ${isT?'today-bar':''} ${!isFut&&m===0?'empty-bar':''}" style="height:${isFut?4:pct}%"></div><div class="bar-day" style="${isT?'color:var(--green);font-weight:700':''}">${DJ[d.getDay()]}</div><div class="bar-val">${isFut?'':m>0?m+'分':'-'}</div>`;
+    el.appendChild(col);
+  }
+}
+
+function saveRecord() {
+  const mins = +document.getElementById('i-min').value||0;
+  const words = +document.getElementById('i-words').value||0;
+  const d = getS(), t = todayStr();
+  d[t] = {...(d[t]||{}), mins, words, radio:radioVal, note:d[t]?.note||''};
+  setS(d);
+  document.getElementById('i-min').value=''; document.getElementById('i-words').value='';
+  setRadio(true); renderHome(); showToast();
+}
+
+// ── Calendar ──
+function renderCalendar() {
+  if (calY === undefined) { const n=new Date(); calY=n.getFullYear(); calM=n.getMonth(); }
+  drawCal();
+}
+
+function changeMonth(dir) {
+  calM+=dir; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;}
+  selDay=null; document.getElementById('day-detail').innerHTML=''; drawCal();
+}
+
+function drawCal() {
+  const data=getS(), todStr=todayStr();
+  document.getElementById('cal-title').textContent=`${calY}年 ${MJ[calM]}`;
+  const grid=document.getElementById('cal-grid'); grid.innerHTML='';
+  DJ.forEach(d=>{const el=document.createElement('div');el.className='cal-dow';el.textContent=d;grid.appendChild(el);});
+  const firstDow=new Date(calY,calM,1).getDay();
+  const dim=new Date(calY,calM+1,0).getDate();
+  const prevDim=new Date(calY,calM,0).getDate();
+  for(let i=firstDow-1;i>=0;i--){const c=document.createElement('div');c.className='cal-day other-month';c.innerHTML=`<div class="cal-day-num">${prevDim-i}</div>`;grid.appendChild(c);}
+  for(let day=1;day<=dim;day++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const rec=data[ds], isTod=ds===todStr, isFut=ds>todStr, isSel=ds===selDay;
+    const c=document.createElement('div');
+    c.className=`cal-day${isTod?' today-cell':''}${isSel?' selected-cell':''}${isFut?' future-cell':''}`;
+    let dots='';
+    if(rec&&!isFut){
+      const mc=rec.mins>=GOAL_MIN?'var(--green)':rec.mins>0?'var(--yellow)':'transparent';
+      if(rec.mins>0) dots+=`<div class="cal-dot" style="background:${mc}" title="${rec.mins}分"></div>`;
+      if(rec.words>0) dots+=`<div class="cal-dot" style="background:var(--purple)" title="${rec.words}語"></div>`;
+      if(rec.radio) dots+=`<div class="cal-dot" style="background:var(--blue)" title="ラジオ"></div>`;
+    }
+    c.innerHTML=`<div class="cal-day-num">${day}</div><div class="cal-dots">${dots}</div>${rec&&rec.mins?`<div class="cal-mins">${rec.mins}分</div>`:''}`;
+    if(!isFut) c.onclick=()=>selectDay(ds);
+    grid.appendChild(c);
+  }
+  const total=firstDow+dim, rem=total%7===0?0:7-(total%7);
+  for(let i=1;i<=rem;i++){const c=document.createElement('div');c.className='cal-day other-month';c.innerHTML=`<div class="cal-day-num">${i}</div>`;grid.appendChild(c);}
+}
+
+function selectDay(ds) {
+  selDay=ds; drawCal();
+  const data=getS(), rec=data[ds]||{mins:0,words:0,radio:false,note:''};
+  const d=new Date(ds+'T00:00:00');
+  const label=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${DJ[d.getDay()]}）`;
+  document.getElementById('day-detail').innerHTML=`
+    <div class="day-detail">
+      <h3>${label}</h3>
+      <div class="detail-stats">
+        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--blue)">${rec.mins||0}</div><div class="detail-stat-label">学習時間（分）</div></div>
+        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--yellow)">${rec.words||0}</div><div class="detail-stat-label">ユメタン（単語）</div></div>
+        <div class="detail-stat"><div class="detail-stat-val" style="color:${rec.radio?'var(--green)':'var(--muted)'}">${rec.radio?'✓':'✗'}</div><div class="detail-stat-label">ラジオ英会話</div></div>
+      </div>
+      <label class="note-label">振り返りメモ</label>
+      <textarea class="note-area" id="note-inp" placeholder="今日の気づき、良かったこと、改善点など...">${rec.note||''}</textarea>
+      <button class="btn btn-blue" style="margin-top:10px;width:100%" onclick="saveNote('${ds}')">メモを保存</button>
+    </div>`;
+  document.getElementById('day-detail').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function saveNote(ds) {
+  const note=document.getElementById('note-inp').value;
+  const data=getS(); data[ds]={...(data[ds]||{mins:0,words:0,radio:false}),note}; setS(data);
+  showToast('✓ メモを保存しました！'); drawCal();
+}
+
+// ── Vocab ──
+function showVTab(vt) {
+  ['fc','list','add'].forEach(t=>{ document.getElementById('vtab-'+t).style.display=t===vt?'block':'none'; });
+  document.querySelectorAll('.vtab-btn').forEach((b,i)=>b.classList.toggle('active',['fc','list','add'][i]===vt));
+  activeVTab=vt;
+  if(vt==='fc') renderFC();
+  if(vt==='list') renderList();
+}
+
+function renderVocab() { renderVProg(); if(activeVTab==='fc') renderFC(); if(activeVTab==='list') renderList(); }
+
+function renderVProg() {
+  const v=getV(), total=v.length, m=v.filter(x=>x.mastered).length, pct=total?m/total*100:0;
+  const td=getS()[todayStr()]?.words||0;
+  document.getElementById('v-prog').innerHTML=`
+    <div class="vp-row"><div class="vp-title">単語マスター進捗</div><div class="vp-count">${m} / ${total} 単語</div></div>
+    <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted)">今日のユメタン: ${td}/${GOAL_WORDS}単語 ${td>=GOAL_WORDS?'<span style="color:var(--green);font-weight:700">✓ 達成！</span>':''}</div>`;
+}
+
+function initSession() {
+  const v=getV();
+  const un=v.filter(x=>!x.mastered).sort(()=>Math.random()-.5);
+  const ma=v.filter(x=>x.mastered).sort(()=>Math.random()-.5);
+  session=[...un,...ma]; sIdx=0; sFlipped=false;
+}
+
+function renderFC() {
+  const v=getV(), el=document.getElementById('vtab-fc');
+  if(!v.length){
+    el.innerHTML=`<div class="card" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">📖</div><div style="font-size:16px;font-weight:700;margin-bottom:8px">まだ単語がありません</div><div style="font-size:13px;color:var(--muted);margin-bottom:20px">「単語を追加」から登録してください</div><button class="btn btn-blue" onclick="showVTab('add')">単語を追加する</button></div>`;
+    return;
+  }
+  if(!session.length || sIdx>=session.length) { initSession(); }
+  if(!session.length) return;
+  if(sIdx>=session.length) { renderSessionDone(); return; }
+  const w=session[sIdx];
+  const cardH = w.img ? '320px' : '220px';
+  el.innerHTML=`
+    <div style="text-align:right;font-size:12px;color:var(--muted);margin-bottom:8px">${sIdx+1} / ${session.length}</div>
+    <div class="fc-area" onclick="flipCard()">
+      <div class="flashcard" style="height:${cardH}">
+        <div class="card-inner ${sFlipped?'flipped':''}" id="c-inner">
+          <div class="card-face">
+            ${w.img?`
+              <div id="fc-img-ph" style="width:100%;height:130px;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:12px;color:var(--muted)">🖼 画像を読み込み中...</div>
+              <img id="fc-img" src="${w.img}" style="display:none;width:100%;height:130px;object-fit:cover;border-radius:10px;margin-bottom:12px"
+                onload="document.getElementById('fc-img-ph').style.display='none';this.style.display='block'"
+                onerror="document.getElementById('fc-img-ph').innerHTML='🖼';document.getElementById('fc-img-ph').style.fontSize='32px'">
+            `:''}
+            <div class="card-word" style="font-size:${w.img?'26px':'34px'}">${esc(w.en)}</div>
+            ${w.pos?posBadge(w.pos):''}
+            <div class="card-hint" style="margin-top:6px">タップして答えを確認</div>
+          </div>
+          <div class="card-face card-back">
+            <div class="card-ja">${esc(w.ja)}</div>
+            ${w.example?`<div class="card-ex">${esc(w.example)}</div>`:''}
+            <div class="audio-row">
+              <button class="audio-btn" onclick="event.stopPropagation();speakW('en')" title="英語を聞く">🔊</button>
+              ${w.example?`<button class="audio-btn" onclick="event.stopPropagation();speakW('ex')" title="例文を聞く">📢</button>`:''}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="fc-acts" style="display:${sFlipped?'block':'none'}">
+      <div class="fc-actions" style="margin-bottom:8px">
+        <button class="judge-btn judge-no" onclick="judge(false)">↩ もう一度</button>
+        <div></div>
+        <button class="judge-btn judge-yes" onclick="judge(true)">覚えた ✓</button>
+      </div>
+    </div>
+    <div class="skip-row"><button class="btn btn-gray" style="font-size:12px;padding:8px 16px" onclick="skip()">スキップ →</button></div>`;
+}
+
+function flipCard() {
+  if(sFlipped) return;
+  sFlipped=true;
+  document.getElementById('c-inner').classList.add('flipped');
+  setTimeout(()=>{ const a=document.getElementById('fc-acts'); if(a) a.style.display='block'; },220);
+}
+
+function speakW(field) {
+  const w=session[sIdx]; if(!w) return;
+  speak(field==='en'?w.en:w.example);
+}
+
+function judge(ok) {
+  const w=session[sIdx], v=getV(), i=v.findIndex(x=>x.id===w.id);
+  if(i>=0){v[i].mastered=ok; setV(v);}
+  sIdx++; sFlipped=false;
+  if(sIdx>=session.length) renderSessionDone(); else renderFC();
+  renderVProg();
+}
+
+function skip() { sIdx++; sFlipped=false; if(sIdx>=session.length) renderSessionDone(); else renderFC(); }
+
+function renderSessionDone() {
+  const v=getV(), m=v.filter(x=>x.mastered).length;
+  document.getElementById('vtab-fc').innerHTML=`
+    <div class="session-done"><div class="big">🎉</div><h2>セッション完了！</h2>
+    <p>全${session.length}単語を確認しました<br>マスター済み: ${m}/${v.length}単語</p>
+    <button class="btn btn-green" onclick="initSession();renderFC()">もう一度やる</button></div>`;
+}
+
+function renderList() {
+  const v=getV(), el=document.getElementById('vtab-list');
+  if(!v.length){el.innerHTML=`<div class="card" style="text-align:center;padding:30px;color:var(--muted)">単語がありません</div>`;return;}
+  const total=v.length, pages=Math.ceil(total/LIST_PER);
+  if(listPage>=pages) listPage=Math.max(0,pages-1);
+  const slice=v.slice(listPage*LIST_PER,(listPage+1)*LIST_PER);
+  const thumb=w=>w.img
+    ?`<img class="word-thumb" src="${w.img}" onerror="this.outerHTML='<div class=\'word-thumb-ph\'>🔤</div>'">`
+    :`<div class="word-thumb-ph">🔤</div>`;
+  const row=w=>`<div class="word-item ${w.mastered?'mastered-item':''}">
+    ${thumb(w)}
+    <div class="word-info">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="word-en">${esc(w.en)}</div>
+        ${w.pos?posBadge(w.pos):''}
+        ${w.mastered?'<span class="mastered-tag">✓</span>':''}
+      </div>
+      <div class="word-ja">${esc(w.ja)}</div>
+      ${w.example?`<div class="word-ex">"${esc(w.example)}"</div>`:''}
+    </div>
+    <div class="word-actions">
+      <button class="icon-btn" onclick="speak('${w.en.replace(/'/g,"\\'")}')">🔊</button>
+      <button class="icon-btn" onclick="toggleM(${w.id})">⇄</button>
+      <button class="icon-btn" onclick="delWord(${w.id})">🗑</button>
+    </div>
+  </div>`;
+  const pager=pages>1?`<div class="pager">
+    <button class="pager-btn" onclick="goPage(${listPage-1})" ${listPage===0?'disabled':''}>‹ 前へ</button>
+    <div class="pager-info">${listPage+1} / ${pages} ページ（全 ${total} 単語）</div>
+    <button class="pager-btn" onclick="goPage(${listPage+1})" ${listPage>=pages-1?'disabled':''}>次へ ›</button>
+  </div>`:'' ;
+  el.innerHTML=`<div class="card">
+    ${pager||`<div style="font-size:12px;color:var(--muted);text-align:right;margin-bottom:12px">全 ${total} 単語</div>`}
+    <div class="word-list">${slice.map(row).join('')}</div>
+    ${pager}
+  </div>`;
+}
+
+function goPage(p) {
+  listPage=p; renderList();
+  document.getElementById('vtab-list').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function speak(text, lang='en-US') {
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text); u.lang=lang; u.rate=0.85; speechSynthesis.speak(u);
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+const POS_MAP = { verb:'動詞', noun:'名詞', adjective:'形容詞', adverb:'副詞', preposition:'前置詞', conjunction:'接続詞', pronoun:'代名詞' };
+
+function strHash(s) { let h=0; for(const c of s) h=(h*31+c.charCodeAt(0))&0xffffffff; return Math.abs(h)%9999+1; }
+function makeImageUrl(en) {
+  const prompt = encodeURIComponent(`${en}, simple illustration, clean white background, minimal cartoon style`);
+  return `https://image.pollinations.ai/prompt/${prompt}?width=300&height=200&nologo=true&seed=${strHash(en)}`;
+}
+
+const PRONOUNS = new Set(['i','you','he','she','it','we','they','me','him','her','us','them','myself','yourself','himself','herself','itself','ourselves','themselves','who','whom','whose','which','what']);
+const ARTICLES = new Set(['a','an','the']);
+
+async function fetchPosAndExample(en) {
+  let posEn = '', posJa = '', apiExample = '';
+  try {
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(en)}`);
+    if (res.ok) {
+      const data = await res.json();
+      posEn = data[0]?.meanings?.[0]?.partOfSpeech || '';
+      posJa = POS_MAP[posEn] || '';
+      for (const m of data[0]?.meanings || []) {
+        for (const d of m.definitions || []) {
+          if (d.example) { apiExample = d.example; break; }
+        }
+        if (apiExample) break;
+      }
+    }
+  } catch(e) {}
+  const w = en.toLowerCase(), an = /^[aeiou]/i.test(w) ? 'an' : 'a';
+  let example = '';
+  if (PRONOUNS.has(w) || posEn === 'pronoun') {
+    example = `I use "${en}" when I speak English.`;
+    posJa = posJa || '代名詞';
+  } else if (ARTICLES.has(w)) {
+    example = `"${en}" is used before a noun in English.`;
+    posJa = posJa || '冠詞';
+  } else if (apiExample) {
+    example = apiExample.charAt(0).toUpperCase() + apiExample.slice(1);
+    if (!/[.!?]$/.test(example)) example += '.';
+  } else {
+    switch(posEn) {
+      case 'verb':      example = `I ${w} every day.`; break;
+      case 'noun':      example = `I have ${an} ${w}.`; break;
+      case 'adjective': example = `She is very ${w}.`; break;
+      case 'adverb':    example = `He studies English ${w}.`; break;
+      default:          example = `I know the word "${en}".`;
+    }
+  }
+  return { posJa, example };
+}
+
+function posBadge(pos) {
+  if (!pos) return '';
+  const cls = ['動詞','他動詞','自動詞'].includes(pos)?'pos-動詞':pos==='名詞'?'pos-名詞':pos==='形容詞'?'pos-形容詞':pos==='副詞'?'pos-副詞':'pos-other';
+  return `<span class="pos-badge ${cls}">${pos}</span>`;
+}
+
+async function addWord() {
+  const en=document.getElementById('a-en').value.trim(), ja=document.getElementById('a-ja').value.trim();
+  let ex=document.getElementById('a-ex').value.trim(), pos=document.getElementById('a-pos').value;
+  if(!en||!ja){showToast('英語と日本語を入力してください');return;}
+  const btn=document.querySelector('[onclick="addWord()"]');
+  if(!ex||!pos){
+    btn.textContent='品詞・例文を取得中…'; btn.disabled=true;
+    const result=await fetchPosAndExample(en);
+    if(!pos&&result.posJa){ pos=result.posJa; document.getElementById('a-pos').value=pos; }
+    if(!ex) ex=result.example;
+    btn.textContent='追加する'; btn.disabled=false;
+  }
+  const img=makeImageUrl(en);
+  new Image().src=img; // 事前読み込み開始
+  const v=getV(); v.push({id:Date.now(),en,ja,pos,example:ex,img,mastered:false,addedDate:todayStr()}); setV(v);
+  document.getElementById('a-en').value=''; document.getElementById('a-ja').value=''; document.getElementById('a-ex').value=''; document.getElementById('a-pos').value='';
+  session=[]; renderVProg();
+  showToast(`"${en}" を追加しました！`);
+}
+
+function importCSV() {
+  const lines=document.getElementById('csv-in').value.trim().split('\n').filter(l=>l.trim());
+  const v=getV(); let cnt=0;
+  lines.forEach(line=>{
+    const i1=line.indexOf(','); if(i1<0) return;
+    const i2=line.indexOf(',',i1+1);
+    const en=line.slice(0,i1).trim(), ja=(i2>0?line.slice(i1+1,i2):line.slice(i1+1)).trim(), ex=i2>0?line.slice(i2+1).trim():'';
+    if(en&&ja){v.push({id:Date.now()+Math.random(),en,ja,example:ex,mastered:false,addedDate:todayStr()});cnt++;}
+  });
+  setV(v); document.getElementById('csv-in').value=''; session=[]; renderVProg(); showToast(`${cnt}単語をインポートしました！`);
+}
+
+function toggleM(id) {
+  const v=getV(), i=v.findIndex(x=>x.id===id); if(i>=0){v[i].mastered=!v[i].mastered;setV(v);} session=[]; renderVocab();
+}
+
+function delWord(id) {
+  if(!confirm('削除しますか？')) return;
+  setV(getV().filter(x=>x.id!==id)); session=[]; renderVocab();
+}
+
+// Auth state
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    _user = user;
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('user-bar').style.display = 'flex';
+    document.getElementById('user-name').textContent = user.displayName || user.email;
+    const [ss, vs] = await Promise.all([
+      db.collection('users').doc(user.uid).collection('d').doc('s').get(),
+      db.collection('users').doc(user.uid).collection('d').doc('v').get()
+    ]);
+    _study = ss.exists ? (ss.data().r || {}) : {};
+    _vocab = vs.exists ? (vs.data().l || []) : [];
+    // localStorageからの移行（初回ログイン時）
+    if (!ss.exists) {
+      const ls = JSON.parse(localStorage.getItem('eng_study_v1') || '{}');
+      if (Object.keys(ls).length > 0) { _study = ls; setS(ls); }
+    }
+    if (!vs.exists) {
+      const lv = JSON.parse(localStorage.getItem('eng_vocab_v1') || '[]');
+      if (lv.length > 0) { _vocab = lv; setV(lv); }
+    }
+    renderHome();
+    const _n = new Date(); calY = _n.getFullYear(); calM = _n.getMonth();
+  } else {
+    _user = null;
+    document.getElementById('login-overlay').style.display = 'flex';
+    document.getElementById('user-bar').style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
