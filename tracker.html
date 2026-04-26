@@ -696,17 +696,13 @@ function showVocabView(view) {
 
 function renderSectionSelect() {
   const sel = document.getElementById('a-sec'); if(!sel) return;
-  const v = getV();
-  const existing = [...new Set(v.map(w=>w.section||1))].sort((a,b)=>a-b);
-  const maxSec = existing.length ? Math.max(...existing) : 0;
-  const newSec = maxSec + 1;
   const counts = {};
-  v.forEach(w=>{ const s=w.section||1; counts[s]=(counts[s]||0)+1; });
+  getV().forEach(w=>{ const s=w.section||1; counts[s]=(counts[s]||0)+1; });
   const prev = parseInt(sel.value) || activeSection || 1;
-  sel.innerHTML = existing.map(n =>
-    `<option value="${n}">セクション ${n}（${counts[n]}単語）</option>`
-  ).join('') + `<option value="${newSec}">＋ 新しいセクション ${newSec}</option>`;
-  sel.value = existing.includes(prev) ? prev : (existing[0] || newSec);
+  sel.innerHTML = Array.from({length:10},(_,i)=>i+1).map(n=>
+    `<option value="${n}">セクション ${n}${counts[n]?`（${counts[n]}単語）`:''}</option>`
+  ).join('');
+  sel.value = (prev>=1&&prev<=10) ? prev : 1;
 }
 
 function openSection(n) {
