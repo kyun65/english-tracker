@@ -893,22 +893,23 @@ const PRONOUNS = new Set(['i','you','he','she','it','we','they','me','him','her'
 const ARTICLES = new Set(['a','an','the']);
 
 async function fetchPosAndExample(en) {
-  let posEn = '', posJa = '', apiExample = '';
+  let posEn = '', posJa = '';
   try {
     const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(en)}`);
     if (res.ok) {
       const data = await res.json();
       posEn = data[0]?.meanings?.[0]?.partOfSpeech || '';
       posJa = POS_MAP[posEn] || '';
-      for (const m of data[0]?.meanings || []) {
-        for (const d of m.definitions || []) {
-          if (d.example) { apiExample = d.example; break; }
-        }
-        if (apiExample) break;
-      }
     }
   } catch(e) {}
   const w = en.toLowerCase(), an = /^[aeiou]/i.test(w) ? 'an' : 'a';
+  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+  const tpls = {
+    'verb':      [`I ${w} every day.`, `Let's ${w} together!`, `She likes to ${w}.`],
+    'noun':      [`I have ${an} ${w}.`, `This is ${an} ${w}.`, `I can see ${an} ${w}.`],
+    'adjective': [`It is very ${w}.`, `She looks ${w} today.`, `I feel ${w}.`],
+    'adverb':    [`He runs ${w}.`, `She speaks English ${w}.`, `Please do it ${w}.`],
+  };
   let example = '';
   if (PRONOUNS.has(w) || posEn === 'pronoun') {
     example = `I use "${en}" when I speak English.`;
@@ -916,17 +917,8 @@ async function fetchPosAndExample(en) {
   } else if (ARTICLES.has(w)) {
     example = `"${en}" is used before a noun in English.`;
     posJa = posJa || '冠詞';
-  } else if (apiExample) {
-    example = apiExample.charAt(0).toUpperCase() + apiExample.slice(1);
-    if (!/[.!?]$/.test(example)) example += '.';
   } else {
-    switch(posEn) {
-      case 'verb':      example = `I ${w} every day.`; break;
-      case 'noun':      example = `I have ${an} ${w}.`; break;
-      case 'adjective': example = `She is very ${w}.`; break;
-      case 'adverb':    example = `He studies English ${w}.`; break;
-      default:          example = `I know the word "${en}".`;
-    }
+    example = tpls[posEn] ? pick(tpls[posEn]) : `I know the word "${en}".`;
   }
   return { posJa, example };
 }
