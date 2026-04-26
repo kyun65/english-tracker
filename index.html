@@ -168,6 +168,18 @@
     .srs-good  .srs-label { color: var(--blue); }
     .srs-easy  .srs-label { color: var(--green); }
     .skip-row { text-align: center; margin-top: 8px; }
+    /* Section */
+    .section-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
+    .section-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+    .section-card:hover { border-color: var(--blue); box-shadow: 0 2px 12px rgba(37,99,235,.1); }
+    .section-card-num { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+    .section-card-title { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+    .section-card-stats { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .section-pbar { height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+    .section-pbar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width .4s; }
+    .section-detail-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .section-back-btn { display: flex; align-items: center; gap: 4px; background: none; border: none; color: var(--blue); font-size: 14px; font-weight: 600; cursor: pointer; padding: 4px 0; }
+    .section-detail-title { font-size: 18px; font-weight: 800; }
     .session-done { text-align: center; padding: 40px 20px; }
     .session-done .big { font-size: 48px; margin-bottom: 16px; }
     .session-done h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
@@ -404,20 +416,44 @@
 
 <!-- VOCAB -->
 <div class="tab-content" id="tab-vocab">
-  <div class="vtabs">
-    <button class="vtab-btn active" onclick="showVTab('fc')">フラッシュカード</button>
-    <button class="vtab-btn" onclick="showVTab('list')">単語リスト</button>
-    <button class="vtab-btn" onclick="showVTab('add')">単語を追加</button>
+  <!-- Top buttons -->
+  <div class="vtabs" id="vocab-top-tabs">
+    <button class="vtab-btn active" id="vtab-top-sections" onclick="showVocabView('sections')">セクション</button>
+    <button class="vtab-btn" id="vtab-top-add" onclick="showVocabView('add')">単語を追加</button>
   </div>
-  <div class="vocab-prog-bar" id="v-prog"></div>
-  <div id="vtab-fc"></div>
-  <div id="vtab-list" style="display:none"></div>
+
+  <!-- Section overview -->
+  <div id="vtab-sections">
+    <div class="vocab-prog-bar" id="v-prog"></div>
+    <div id="section-list-area"></div>
+  </div>
+
+  <!-- Section detail -->
+  <div id="vtab-section-detail" style="display:none">
+    <div class="section-detail-hd">
+      <button class="section-back-btn" onclick="backToSections()"><span class="material-icons" style="font-size:18px">arrow_back</span>一覧</button>
+      <div class="section-detail-title" id="section-detail-title"></div>
+    </div>
+    <div class="vtabs" style="margin-bottom:14px">
+      <button class="vtab-btn active" id="vsubtab-fc" onclick="showVTab('fc')">フラッシュカード</button>
+      <button class="vtab-btn" id="vsubtab-list" onclick="showVTab('list')">単語リスト</button>
+    </div>
+    <div class="vocab-prog-bar" id="v-prog-section"></div>
+    <div id="vtab-fc"></div>
+    <div id="vtab-list" style="display:none"></div>
+  </div>
+
+  <!-- Add word -->
   <div id="vtab-add" style="display:none">
     <div class="card">
       <div class="card-title">1件追加</div>
       <div class="add-grid">
         <div class="fg"><label>英語</label><input type="text" id="a-en" placeholder="run"></div>
         <div class="fg"><label>日本語</label><input type="text" id="a-ja" placeholder="走る"></div>
+        <div class="fg">
+          <label>セクション番号</label>
+          <input type="number" id="a-sec" min="1" placeholder="1" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none">
+        </div>
         <div class="fg">
           <label>品詞（自動取得）</label>
           <select id="a-pos" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none">
@@ -438,8 +474,8 @@
     </div>
     <div class="card" style="margin-top:0">
       <div class="card-title">CSVで一括インポート</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">形式: <code style="background:var(--bg2);padding:2px 6px;border-radius:4px;font-size:12px">英語,日本語,例文（任意）</code></p>
-      <div class="fg"><textarea id="csv-in" placeholder="run,走る,I run every morning.&#10;happy,幸せな,She looks very happy today." style="min-height:120px;font-family:monospace;font-size:13px"></textarea></div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">形式: <code style="background:var(--bg2);padding:2px 6px;border-radius:4px;font-size:12px">英語,日本語,セクション番号,例文（任意）</code></p>
+      <div class="fg"><textarea id="csv-in" placeholder="run,走る,1&#10;happy,幸せな,2" style="min-height:120px;font-family:monospace;font-size:13px"></textarea></div>
       <button class="btn btn-gray" style="margin-top:10px;width:100%" onclick="importCSV()">インポートする</button>
     </div>
   </div>
@@ -487,6 +523,7 @@ let radioVal = true;
 let calY, calM, selDay = null;
 let session = [], sIdx = 0, sFlipped = false;
 let activeVTab = 'fc';
+let activeSection = null; // null=overview, number=selected section
 let listPage = 0;
 const LIST_PER = 20;
 
@@ -498,7 +535,7 @@ function showTab(tab) {
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
   if (tab === 'home') renderHome();
   if (tab === 'calendar') renderCalendar();
-  if (tab === 'vocab') renderVocab();
+  if (tab === 'vocab') { showVocabView('sections'); }
   if (tab === 'learn') renderLearn();
 }
 
@@ -645,23 +682,86 @@ function saveNote(ds) {
 }
 
 // ── Vocab ──
+const getSV = () => activeSection===null ? getV() : getV().filter(w=>(w.section||1)===activeSection);
+
+function showVocabView(view) {
+  ['sections','section-detail','add'].forEach(v=>{
+    document.getElementById('vtab-'+v).style.display = v===view?'block':'none';
+  });
+  document.getElementById('vtab-top-sections').classList.toggle('active', view==='sections'||view==='section-detail');
+  document.getElementById('vtab-top-add').classList.toggle('active', view==='add');
+  if(view==='sections') { activeSection=null; renderSections(); renderVProg(); }
+  if(view==='add') {}
+}
+
+function openSection(n) {
+  activeSection = n;
+  session = []; sIdx = 0; sFlipped = false; listPage = 0;
+  document.getElementById('section-detail-title').textContent = `セクション ${n}`;
+  showVocabView('section-detail');
+  renderVProgSection();
+  showVTab('fc');
+}
+
+function backToSections() {
+  activeSection = null;
+  session = [];
+  showVocabView('sections');
+}
+
 function showVTab(vt) {
-  ['fc','list','add'].forEach(t=>{ document.getElementById('vtab-'+t).style.display=t===vt?'block':'none'; });
-  document.querySelectorAll('.vtab-btn').forEach((b,i)=>b.classList.toggle('active',['fc','list','add'][i]===vt));
+  ['fc','list'].forEach(t=>{ const el=document.getElementById('vtab-'+t); if(el) el.style.display=t===vt?'block':'none'; });
+  ['fc','list'].forEach(t=>{ const b=document.getElementById('vsubtab-'+t); if(b) b.classList.toggle('active',t===vt); });
   activeVTab=vt;
   if(vt==='fc') renderFC();
   if(vt==='list') renderList();
 }
 
-function renderVocab() { renderVProg(); if(activeVTab==='fc') renderFC(); if(activeVTab==='list') renderList(); }
+function renderVocab() {
+  if(activeSection===null) { renderVProg(); renderSections(); }
+  else { renderVProgSection(); if(activeVTab==='fc') renderFC(); if(activeVTab==='list') renderList(); }
+}
+
+function renderSections() {
+  const v=getV(), el=document.getElementById('section-list-area');
+  const nums=[...new Set(v.map(w=>w.section||1))].sort((a,b)=>a-b);
+  if(!nums.length){
+    el.innerHTML=`<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+      <span class="material-icons" style="font-size:48px;display:block;margin-bottom:12px">menu_book</span>
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">まだ単語がありません</div>
+      <div style="font-size:13px;margin-bottom:20px">「単語を追加」からセクションを指定して追加してください</div>
+      <button class="btn btn-blue" onclick="showVocabView('add')">単語を追加する</button></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="section-grid">${nums.map(n=>{
+    const sw=v.filter(w=>(w.section||1)===n);
+    const m=sw.filter(w=>w.mastered).length, pct=sw.length?m/sw.length*100:0;
+    const td=sw.filter(w=>!w.srsDue||w.srsDue<=todayStr()).length;
+    return `<div class="section-card" onclick="openSection(${n})">
+      <div class="section-card-num">セクション ${n}</div>
+      <div class="section-card-title">${sw.length}単語</div>
+      <div class="section-card-stats">${m}/${sw.length} マスター${td?` · <span style="color:var(--blue);font-weight:700">${td}件 復習あり</span>`:'　'}</div>
+      <div class="section-pbar"><div class="section-pbar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('')}</div>`;
+}
 
 function renderVProg() {
   const v=getV(), total=v.length, m=v.filter(x=>x.mastered).length, pct=total?m/total*100:0;
   const td=getS()[todayStr()]?.words||0;
   document.getElementById('v-prog').innerHTML=`
-    <div class="vp-row"><div class="vp-title">単語マスター進捗</div><div class="vp-count">${m} / ${total} 単語</div></div>
+    <div class="vp-row"><div class="vp-title">全体の進捗</div><div class="vp-count">${m} / ${total} 単語</div></div>
     <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     <div style="margin-top:10px;font-size:12px;color:var(--muted)">今日のユメタン: ${td}/${GOAL_WORDS}単語 ${td>=GOAL_WORDS?'<span style="color:var(--green);font-weight:700">✓ 達成！</span>':''}</div>`;
+}
+
+function renderVProgSection() {
+  const v=getSV(), total=v.length, m=v.filter(x=>x.mastered).length, pct=total?m/total*100:0;
+  const el=document.getElementById('v-prog-section'); if(!el) return;
+  el.className='vocab-prog-bar';
+  el.innerHTML=`
+    <div class="vp-row"><div class="vp-title">セクション ${activeSection} の進捗</div><div class="vp-count">${m} / ${total} 単語</div></div>
+    <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>`;
 }
 
 function srsNextInterval(w, rating) {
@@ -685,7 +785,7 @@ function applySRS(w, rating) {
 }
 
 function initSession() {
-  const v=getV(), today=todayStr();
+  const v=getSV(), today=todayStr();
   const due=v.filter(x=>!x.srsDue||x.srsDue<=today).sort(()=>Math.random()-.5);
   const notDue=v.filter(x=>x.srsDue&&x.srsDue>today).sort(()=>Math.random()-.5);
   session=due.length ? due : notDue.slice(0,10);
@@ -794,21 +894,21 @@ function judgeSRS(rating) {
   }
   sIdx++; sFlipped=false;
   if(sIdx>=session.length) renderSessionDone(); else renderFC();
-  renderVProg();
+  renderVProgSection();
 }
 
 function skip() { sIdx++; sFlipped=false; if(sIdx>=session.length) renderSessionDone(); else renderFC(); }
 
 function renderSessionDone() {
-  const v=getV(), m=v.filter(x=>x.mastered).length;
+  const sv=getSV(), m=sv.filter(x=>x.mastered).length;
   document.getElementById('vtab-fc').innerHTML=`
     <div class="session-done"><span class="material-icons big" style="display:block">celebration</span><h2>セッション完了！</h2>
-    <p>全${session.length}単語を確認しました<br>マスター済み: ${m}/${v.length}単語</p>
+    <p>全${session.length}単語を確認しました<br>マスター済み: ${m}/${sv.length}単語</p>
     <button class="btn btn-green" onclick="initSession();renderFC()">もう一度やる</button></div>`;
 }
 
 function renderList() {
-  const v=getV(), el=document.getElementById('vtab-list');
+  const v=getSV(), el=document.getElementById('vtab-list');
   if(!v.length){el.innerHTML=`<div class="card" style="text-align:center;padding:30px;color:var(--muted)">単語がありません</div>`;return;}
   const total=v.length, pages=Math.ceil(total/LIST_PER);
   if(listPage>=pages) listPage=Math.max(0,pages-1);
@@ -932,6 +1032,7 @@ function posBadge(pos) {
 async function addWord() {
   const en=document.getElementById('a-en').value.trim(), ja=document.getElementById('a-ja').value.trim();
   let ex=document.getElementById('a-ex').value.trim(), pos=document.getElementById('a-pos').value;
+  const sec=parseInt(document.getElementById('a-sec').value)||1;
   if(!en||!ja){showToast('英語と日本語を入力してください');return;}
   const btn=document.querySelector('[onclick="addWord()"]');
   if(!ex||!pos){
@@ -941,24 +1042,24 @@ async function addWord() {
     if(!ex) ex=result.example;
     btn.textContent='追加する'; btn.disabled=false;
   }
-  const img=makeImageUrl(en);
-  new Image().src=img; // 事前読み込み開始
-  const v=getV(); v.push({id:Date.now(),en,ja,pos,example:ex,img,mastered:false,addedDate:todayStr()}); setV(v);
+  const v=getV(); v.push({id:Date.now(),en,ja,pos,example:ex,section:sec,mastered:false,addedDate:todayStr()}); setV(v);
   document.getElementById('a-en').value=''; document.getElementById('a-ja').value=''; document.getElementById('a-ex').value=''; document.getElementById('a-pos').value='';
-  session=[]; renderVProg();
-  showToast(`"${en}" を追加しました！`);
+  session=[]; renderSections(); renderVProg();
+  showToast(`"${en}" をセクション${sec}に追加しました！`);
 }
 
 function importCSV() {
   const lines=document.getElementById('csv-in').value.trim().split('\n').filter(l=>l.trim());
   const v=getV(); let cnt=0;
   lines.forEach(line=>{
-    const i1=line.indexOf(','); if(i1<0) return;
-    const i2=line.indexOf(',',i1+1);
-    const en=line.slice(0,i1).trim(), ja=(i2>0?line.slice(i1+1,i2):line.slice(i1+1)).trim(), ex=i2>0?line.slice(i2+1).trim():'';
-    if(en&&ja){v.push({id:Date.now()+Math.random(),en,ja,example:ex,mastered:false,addedDate:todayStr()});cnt++;}
+    const parts=line.split(',');
+    if(parts.length<2) return;
+    const en=parts[0].trim(), ja=parts[1].trim();
+    const sec=parseInt(parts[2])||1;
+    const ex=parts[3]?parts[3].trim():'';
+    if(en&&ja){v.push({id:Date.now()+Math.random(),en,ja,section:sec,example:ex,mastered:false,addedDate:todayStr()});cnt++;}
   });
-  setV(v); document.getElementById('csv-in').value=''; session=[]; renderVProg(); showToast(`${cnt}単語をインポートしました！`);
+  setV(v); document.getElementById('csv-in').value=''; session=[]; renderSections(); renderVProg(); showToast(`${cnt}単語をインポートしました！`);
 }
 
 function toggleM(id) {
