@@ -158,15 +158,15 @@
     .judge-no { background: rgba(248,81,73,.1); border-color: var(--red); color: var(--red); }
     .judge-yes { background: rgba(57,211,83,.1); border-color: var(--green); color: var(--green); }
     .srs-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 8px; }
-    .srs-btn { display: flex; flex-direction: column; align-items: center; padding: 12px 6px; border-radius: 12px; border: 1px solid; font-weight: 700; cursor: pointer; transition: all .15s; gap: 3px; }
-    .srs-btn:hover { opacity: .8; transform: translateY(-1px); }
-    .srs-btn:active { transform: translateY(0); }
+    .srs-btn { display: flex; flex-direction: column; align-items: center; padding: 12px 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg2); font-weight: 600; cursor: pointer; transition: background .12s, border-color .12s; gap: 3px; }
+    .srs-btn:hover { background: var(--bg3); border-color: #cbd5e1; }
+    .srs-btn:active { background: var(--bg3); }
     .srs-btn .srs-label { font-size: 13px; }
-    .srs-btn .srs-interval { font-size: 10px; opacity: .65; }
-    .srs-again { background: rgba(220,38,38,.08); border-color: var(--red); color: var(--red); }
-    .srs-hard  { background: rgba(202,138,4,.08); border-color: var(--yellow); color: var(--yellow); }
-    .srs-good  { background: rgba(37,99,235,.08); border-color: var(--blue); color: var(--blue); }
-    .srs-easy  { background: rgba(22,163,74,.08); border-color: var(--green); color: var(--green); }
+    .srs-btn .srs-interval { font-size: 10px; color: var(--muted); }
+    .srs-again .srs-label { color: var(--red); }
+    .srs-hard  .srs-label { color: var(--yellow); }
+    .srs-good  .srs-label { color: var(--blue); }
+    .srs-easy  .srs-label { color: var(--green); }
     .skip-row { text-align: center; margin-top: 8px; }
     .session-done { text-align: center; padding: 40px 20px; }
     .session-done .big { font-size: 48px; margin-bottom: 16px; }
@@ -702,7 +702,7 @@ function renderFC() {
   if(!session.length) return;
   if(sIdx>=session.length) { renderSessionDone(); return; }
   const w=session[sIdx];
-  const illustUrl = `https://source.unsplash.com/600x300/?${encodeURIComponent(w.en.split(' ')[0])}`;
+  const illustUrl = `https://loremflickr.com/600/300/${encodeURIComponent(w.en.split(' ')[0])}`;
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <span style="font-size:12px;color:var(--muted)">${sIdx+1} / ${session.length}</span>
