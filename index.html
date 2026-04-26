@@ -752,39 +752,21 @@ async function loadCardIllust(word) {
   const imgEl = document.getElementById('card-illust-img');
   const phEl  = document.getElementById('illust-ph');
   if (!imgEl || !phEl) return;
-  const keyword = word.split(' ')[0];
-  let src = null;
-
-  // 1st: Wikipedia summary thumbnail
+  const keyword = encodeURIComponent(word.split(' ').slice(0,2).join(' '));
   try {
-    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(keyword)}`);
-    if (res.ok) {
-      const data = await res.json();
-      src = data.thumbnail && data.thumbnail.source || null;
+    const res  = await fetch(`https://pixabay.com/api/?key=9775886-a7b1bd8081468ed8f1c4ff64a&q=${keyword}&image_type=photo&orientation=horizontal&safesearch=true&per_page=5`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const src  = data.hits && data.hits[0] && data.hits[0].webformatURL;
+    if (src) {
+      imgEl.onload  = () => { phEl.style.display='none'; imgEl.style.opacity='1'; };
+      imgEl.onerror = () => { phEl.innerHTML='<span class="material-icons" style="font-size:32px">image_not_supported</span>'; imgEl.style.display='none'; };
+      imgEl.style.display = 'block';
+      imgEl.src = src;
+    } else {
+      phEl.innerHTML = '<span class="material-icons" style="font-size:32px">image_not_supported</span>';
     }
-  } catch {}
-
-  // 2nd fallback: Wikimedia Commons image search
-  if (!src) {
-    try {
-      const res = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(keyword)}&gsrnamespace=6&prop=pageimages&piprop=thumbnail&pithumbsize=600&format=json&origin=*`);
-      if (res.ok) {
-        const data = await res.json();
-        const pages = data.query && data.query.pages;
-        if (pages) {
-          const hit = Object.values(pages).find(p => p.thumbnail);
-          src = hit && hit.thumbnail && hit.thumbnail.source || null;
-        }
-      }
-    } catch {}
-  }
-
-  if (src) {
-    imgEl.onload  = () => { phEl.style.display='none'; imgEl.style.opacity='1'; };
-    imgEl.onerror = () => { phEl.innerHTML='<span class="material-icons" style="font-size:32px">image_not_supported</span>'; imgEl.style.display='none'; };
-    imgEl.style.display = 'block';
-    imgEl.src = src;
-  } else {
+  } catch {
     phEl.innerHTML = '<span class="material-icons" style="font-size:32px">image_not_supported</span>';
   }
 }
