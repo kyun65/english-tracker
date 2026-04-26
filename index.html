@@ -187,6 +187,37 @@
       .cal-day { min-height: 54px; }
     }
 
+    /* Learning */
+    .grade-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .grade-btn { padding: 8px 20px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg2); color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; }
+    .grade-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .unit-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all .2s; }
+    .unit-card:hover { border-color: var(--blue); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+    .unit-card.done { border-color: var(--green); background: rgba(22,163,74,.03); }
+    .unit-grade { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .unit-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+    .unit-sub { font-size: 12px; color: var(--muted); }
+    .unit-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+    .unit-count { font-size: 12px; color: var(--muted); }
+    .unit-badge { font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: 700; }
+    .unit-badge.done { background: rgba(22,163,74,.1); color: var(--green); border: 1px solid rgba(22,163,74,.3); }
+    .unit-badge.new { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+    .learn-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .back-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer; color: var(--text); font-size: 13px; display: flex; align-items: center; gap: 4px; transition: all .2s; white-space: nowrap; }
+    .back-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .pattern-card { background: var(--bg2); border: 2px solid var(--border); border-radius: 20px; padding: 48px 28px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; min-height: 220px; margin-bottom: 16px; }
+    .pattern-card:hover { border-color: var(--blue); }
+    .pattern-ja { font-size: 22px; font-weight: 700; margin-bottom: 12px; line-height: 1.5; }
+    .pattern-hint { font-size: 13px; color: var(--muted); }
+    .pattern-en { font-size: 20px; font-weight: 700; color: var(--blue); margin-bottom: 4px; line-height: 1.5; display: none; }
+    .pattern-card.flipped { border-color: var(--blue); background: rgba(37,99,235,.02); }
+    .pattern-card.flipped .pattern-hint { display: none; }
+    .pattern-card.flipped .pattern-en { display: block; }
+    .learn-actions { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+    .learn-done { text-align: center; padding: 40px 20px; }
+    .learn-done .big-icon { font-size: 56px; color: var(--green); margin-bottom: 16px; }
+
     /* Desktop: left sidebar */
     @media (min-width: 768px) {
       .tab-bar {
@@ -257,6 +288,10 @@
   <button class="tab-btn" data-tab="vocab" onclick="showTab('vocab')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
     ユメタン
+  </button>
+  <button class="tab-btn" data-tab="learn" onclick="showTab('learn')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 12 15 2 8.5"/><line x1="12" y1="15" x2="12" y2="22"/><polyline points="7 11.5 7 18 12 21 17 18 17 11.5"/></svg>
+    学習
   </button>
 </nav>
 
@@ -380,6 +415,11 @@
   </div>
 </div>
 
+<!-- LEARN -->
+<div class="tab-content" id="tab-learn">
+  <div id="vtab-learn-main"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -429,6 +469,7 @@ function showTab(tab) {
   if (tab === 'home') renderHome();
   if (tab === 'calendar') renderCalendar();
   if (tab === 'vocab') renderVocab();
+  if (tab === 'learn') renderLearn();
 }
 
 function showToast(msg = '✓ 記録しました！') {
@@ -849,6 +890,199 @@ function delWord(id) {
   setV(getV().filter(x=>x.id!==id)); session=[]; renderVocab();
 }
 
+// ── Learning ──
+const CURRICULUM = {
+  1: { label:'中1', units:[
+    { id:'g1u1', title:'Be動詞', sub:'am / is / are（肯定文）', patterns:[
+      {ja:'私は田中です。',en:'I am Tanaka.'},{ja:'彼は学生です。',en:'He is a student.'},
+      {ja:'彼女は先生です。',en:'She is a teacher.'},{ja:'これは本です。',en:'This is a book.'},
+      {ja:'私たちは友達です。',en:'We are friends.'},{ja:'彼らは忙しい。',en:'They are busy.'},
+      {ja:'あなたは正しい。',en:'You are right.'},{ja:'彼は背が高い。',en:'He is tall.'},
+    ]},
+    { id:'g1u2', title:'Be動詞の疑問文・否定文', sub:'Are you...? / I am not...', patterns:[
+      {ja:'あなたは学生ですか？',en:'Are you a student?'},{ja:'彼は医者ですか？',en:'Is he a doctor?'},
+      {ja:'私は疲れていない。',en:'I am not tired.'},{ja:'彼女は家にいない。',en:'She is not at home.'},
+      {ja:'これはあなたの本ですか？',en:'Is this your book?'},{ja:'彼らは友達ではない。',en:'They are not friends.'},
+      {ja:'今何時ですか？',en:'What time is it?'},{ja:'あなたたちは準備できていますか？',en:'Are you ready?'},
+    ]},
+    { id:'g1u3', title:'一般動詞', sub:'like / have / go / Do you...?', patterns:[
+      {ja:'私は音楽が好きです。',en:'I like music.'},{ja:'彼女は英語を勉強します。',en:'She studies English.'},
+      {ja:'私は毎日学校に行きます。',en:'I go to school every day.'},{ja:'彼は犬を飼っています。',en:'He has a dog.'},
+      {ja:'あなたは音楽が好きですか？',en:'Do you like music?'},{ja:'彼は英語を話しますか？',en:'Does he speak English?'},
+      {ja:'私はテレビを見ない。',en:'I don\'t watch TV.'},{ja:'彼女は肉を食べません。',en:'She doesn\'t eat meat.'},
+    ]},
+    { id:'g1u4', title:'現在進行形', sub:'I am playing...', patterns:[
+      {ja:'私は今勉強しています。',en:'I am studying now.'},{ja:'彼は音楽を聴いています。',en:'He is listening to music.'},
+      {ja:'彼女は料理をしています。',en:'She is cooking.'},{ja:'彼らはサッカーをしています。',en:'They are playing soccer.'},
+      {ja:'何をしていますか？',en:'What are you doing?'},{ja:'私は今走っていません。',en:'I am not running now.'},
+      {ja:'彼は本を読んでいますか？',en:'Is he reading a book?'},{ja:'雨が降っています。',en:'It is raining.'},
+    ]},
+    { id:'g1u5', title:'can / 命令文', sub:'I can swim. / Please sit down.', patterns:[
+      {ja:'私は泳げます。',en:'I can swim.'},{ja:'彼女はピアノが弾けます。',en:'She can play the piano.'},
+      {ja:'手伝ってもらえますか？',en:'Can you help me?'},{ja:'私は速く走れない。',en:'I can\'t run fast.'},
+      {ja:'座ってください。',en:'Please sit down.'},{ja:'静かにしてください。',en:'Be quiet.'},
+      {ja:'走らないでください。',en:'Don\'t run.'},{ja:'心配しないで。',en:'Don\'t worry.'},
+    ]},
+  ]},
+  2: { label:'中2', units:[
+    { id:'g2u1', title:'過去形', sub:'規則・不規則動詞 / Did you...?', patterns:[
+      {ja:'昨日勉強しました。',en:'I studied yesterday.'},{ja:'彼女は昨日料理をしました。',en:'She cooked yesterday.'},
+      {ja:'私は昨日図書館に行きました。',en:'I went to the library yesterday.'},{ja:'彼は映画を見ました。',en:'He saw a movie.'},
+      {ja:'私は朝ごはんを食べました。',en:'I ate breakfast.'},{ja:'あなたは昨日何をしましたか？',en:'What did you do yesterday?'},
+      {ja:'私は昨日学校に行きませんでした。',en:'I didn\'t go to school yesterday.'},{ja:'あなたはいつ日本に来ましたか？',en:'When did you come to Japan?'},
+    ]},
+    { id:'g2u2', title:'未来形', sub:'will / be going to', patterns:[
+      {ja:'明日また来ます。',en:'I will come again tomorrow.'},{ja:'私が手伝いましょうか？',en:'Shall I help you?'},
+      {ja:'私はそれをやります。',en:'I will do it.'},{ja:'彼は来ないでしょう。',en:'He will not come.'},
+      {ja:'今日の午後、映画を見に行く予定です。',en:'I am going to see a movie this afternoon.'},{ja:'何をする予定ですか？',en:'What are you going to do?'},
+      {ja:'彼らはパーティーを開く予定です。',en:'They are going to have a party.'},{ja:'雨が降りそうです。',en:'It is going to rain.'},
+    ]},
+    { id:'g2u3', title:'不定詞 to', sub:'want to / like to / in order to', patterns:[
+      {ja:'私は英語を勉強したい。',en:'I want to study English.'},{ja:'彼女は医者になりたい。',en:'She wants to be a doctor.'},
+      {ja:'私は音楽を聴くのが好きです。',en:'I like to listen to music.'},{ja:'彼は走るために早起きします。',en:'He gets up early to run.'},
+      {ja:'私は何か食べるものが欲しい。',en:'I want something to eat.'},{ja:'私はあなたに会えて嬉しいです。',en:'I am glad to meet you.'},
+      {ja:'何か飲むものをもらえますか？',en:'Can I have something to drink?'},{ja:'彼は泳ぎ方を知っています。',en:'He knows how to swim.'},
+    ]},
+    { id:'g2u4', title:'動名詞', sub:'Swimming is fun. / I like playing...', patterns:[
+      {ja:'私は音楽を聴くのが好きです。',en:'I like listening to music.'},{ja:'泳ぐのは楽しい。',en:'Swimming is fun.'},
+      {ja:'彼女は料理が得意です。',en:'She is good at cooking.'},{ja:'私は本を読むのをやめました。',en:'I stopped reading books.'},
+      {ja:'英語を話す練習をしています。',en:'I am practicing speaking English.'},{ja:'外で食べるのはどうですか？',en:'How about eating out?'},
+      {ja:'彼は毎朝走ることを楽しんでいます。',en:'He enjoys running every morning.'},{ja:'彼女は歌うのが好きです。',en:'She loves singing.'},
+    ]},
+    { id:'g2u5', title:'比較', sub:'bigger / the biggest / as...as', patterns:[
+      {ja:'彼は私より背が高い。',en:'He is taller than me.'},{ja:'これは最も難しい問題です。',en:'This is the most difficult problem.'},
+      {ja:'彼女は私と同じくらい速く走れます。',en:'She can run as fast as me.'},{ja:'東京は大阪より大きい。',en:'Tokyo is bigger than Osaka.'},
+      {ja:'英語は数学より簡単です。',en:'English is easier than math.'},{ja:'これが一番安い品物ですか？',en:'Is this the cheapest item?'},
+      {ja:'彼女は妹より上手に歌えます。',en:'She can sing better than her sister.'},{ja:'これが今まで食べた中で一番美味しい料理です。',en:'This is the most delicious dish I have ever eaten.'},
+    ]},
+  ]},
+  3: { label:'中3', units:[
+    { id:'g3u1', title:'現在完了形', sub:'経験・継続・完了', patterns:[
+      {ja:'私は富士山に登ったことがあります。',en:'I have climbed Mt. Fuji.'},{ja:'あなたはお寿司を食べたことがありますか？',en:'Have you ever eaten sushi?'},
+      {ja:'私は外国に行ったことがありません。',en:'I have never been abroad.'},{ja:'私は5年間ここに住んでいます。',en:'I have lived here for five years.'},
+      {ja:'私はちょうど宿題を終えました。',en:'I have just finished my homework.'},{ja:'彼はもう夕食を食べました。',en:'He has already eaten dinner.'},
+      {ja:'まだその映画を見ていません。',en:'I have not seen the movie yet.'},{ja:'彼女はもう日本を離れましたか？',en:'Has she left Japan yet?'},
+    ]},
+    { id:'g3u2', title:'受け身', sub:'am / is / are + 過去分詞', patterns:[
+      {ja:'この本は英語で書かれています。',en:'This book is written in English.'},{ja:'その橋は100年前に建てられました。',en:'The bridge was built 100 years ago.'},
+      {ja:'この歌は世界中で愛されています。',en:'This song is loved all over the world.'},{ja:'その試合は明日行われます。',en:'The game will be held tomorrow.'},
+      {ja:'彼は先生に褒められました。',en:'He was praised by his teacher.'},{ja:'日本語は世界中で話されていますか？',en:'Is Japanese spoken around the world?'},
+      {ja:'その建物はいつ建てられましたか？',en:'When was the building built?'},{ja:'その窓は誰かに割られました。',en:'The window was broken by someone.'},
+    ]},
+    { id:'g3u3', title:'関係代名詞', sub:'who / which / that', patterns:[
+      {ja:'これは彼が書いた本です。',en:'This is the book that he wrote.'},{ja:'私には東京に住んでいる友達がいます。',en:'I have a friend who lives in Tokyo.'},
+      {ja:'私が読んでいる本はとても面白い。',en:'The book that I am reading is very interesting.'},{ja:'彼女は3か国語を話せる人です。',en:'She is a person who can speak three languages.'},
+      {ja:'昨日私が会った女の子は学生です。',en:'The girl that I met yesterday is a student.'},{ja:'これが私たちが使う教室です。',en:'This is the classroom that we use.'},
+      {ja:'これが私が探していたものです。',en:'This is what I was looking for.'},{ja:'あそこにいる男の人は誰ですか？',en:'Who is the man standing over there?'},
+    ]},
+    { id:'g3u4', title:'不定詞の応用', sub:'too...to / enough to / how to', patterns:[
+      {ja:'彼は疲れすぎて動けない。',en:'He is too tired to move.'},{ja:'彼女は英語を話せるほど賢い。',en:'She is smart enough to speak English.'},
+      {ja:'私はいつ出発すればよいかわかりません。',en:'I don\'t know when to leave.'},{ja:'彼に何を言えばいいか教えてください。',en:'Please tell me what to say to him.'},
+      {ja:'彼女は何を買うか決めました。',en:'She decided what to buy.'},{ja:'彼は起きるのが早すぎた。',en:'He got up too early.'},
+      {ja:'私はどこへ行けばいいかわかりません。',en:'I don\'t know where to go.'},{ja:'彼女はケーキの作り方を知っています。',en:'She knows how to make a cake.'},
+    ]},
+  ]},
+};
+
+let learnGrade=1, learnUnit=null, learnIdx=0, learnFlipped=false, learnProgress={};
+
+async function saveLearnProgress() {
+  if(_user) db.collection('users').doc(_user.uid).collection('d').doc('learn').set({p:learnProgress}).catch(()=>{});
+}
+
+function renderLearn() { learnUnit ? renderPattern() : renderUnitList(); }
+
+function renderUnitList() {
+  const el=document.getElementById('vtab-learn-main');
+  const g=CURRICULUM[learnGrade];
+  const tabs=[1,2,3].map(n=>`<button class="grade-btn ${n===learnGrade?'active':''}" onclick="setLearnGrade(${n})">${CURRICULUM[n].label}</button>`).join('');
+  const units=g.units.map(u=>{
+    const done=learnProgress[u.id]==='done';
+    return `<div class="unit-card ${done?'done':''}" onclick="startUnit('${u.id}','${learnGrade}')">
+      <div class="unit-grade">${g.label}</div>
+      <div class="unit-title">${u.title}</div>
+      <div class="unit-sub">${u.sub}</div>
+      <div class="unit-meta">
+        <span class="unit-count">${u.patterns.length}パターン</span>
+        <span class="unit-badge ${done?'done':'new'}">${done?'✓ 完了':'未学習'}</span>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="grade-tabs">${tabs}</div><div class="unit-grid">${units}</div>`;
+}
+
+function setLearnGrade(g) { learnGrade=g; renderUnitList(); }
+
+function startUnit(unitId, grade) {
+  if(grade) learnGrade=+grade;
+  learnUnit=CURRICULUM[learnGrade].units.find(u=>u.id===unitId);
+  learnIdx=0; learnFlipped=false; renderPattern();
+}
+
+function backToUnits() { learnUnit=null; renderLearn(); }
+
+function renderPattern() {
+  const el=document.getElementById('vtab-learn-main');
+  if(!learnUnit) return;
+  if(learnIdx>=learnUnit.patterns.length) { renderLearnDone(); return; }
+  const p=learnUnit.patterns[learnIdx];
+  const enEsc=p.en.replace(/'/g,"\\'");
+  el.innerHTML=`
+    <div class="learn-header">
+      <button class="back-btn" onclick="backToUnits()"><span class="material-icons" style="font-size:16px">arrow_back</span> 戻る</button>
+      <div style="flex:1"><div style="font-size:15px;font-weight:800">${learnUnit.title}</div><div style="font-size:11px;color:var(--muted)">${learnIdx+1} / ${learnUnit.patterns.length}パターン</div></div>
+    </div>
+    <div class="pattern-card ${learnFlipped?'flipped':''}" onclick="flipLearnCard()" id="learn-card">
+      <div class="pattern-ja">${p.ja}</div>
+      <div class="pattern-hint">タップして英語を確認</div>
+      <div class="pattern-en" style="display:${learnFlipped?'block':'none'}">${p.en}</div>
+      <div class="audio-row" style="display:${learnFlipped?'flex':'none'};margin-top:12px">
+        <button class="audio-btn" onclick="event.stopPropagation();speak('${enEsc}')"><span class="material-icons">volume_up</span></button>
+      </div>
+    </div>
+    <div style="display:${learnFlipped?'block':'none'}" id="learn-acts">
+      <div class="learn-actions">
+        <button class="judge-btn judge-no" onclick="judgeLearn(false)">↩ もう一度</button>
+        <div></div>
+        <button class="judge-btn judge-yes" onclick="judgeLearn(true)">できた ✓</button>
+      </div>
+    </div>`;
+  if(learnFlipped) speak(p.en);
+}
+
+function flipLearnCard() {
+  if(learnFlipped) return;
+  learnFlipped=true;
+  const p=learnUnit.patterns[learnIdx];
+  document.getElementById('learn-card').classList.add('flipped');
+  document.querySelector('#learn-card .pattern-hint').style.display='none';
+  document.querySelector('#learn-card .pattern-en').style.display='block';
+  document.querySelector('#learn-card .audio-row').style.display='flex';
+  setTimeout(()=>{ const a=document.getElementById('learn-acts'); if(a) a.style.display='block'; },200);
+  speak(p.en);
+}
+
+function judgeLearn(ok) {
+  if(ok) {
+    learnIdx++;
+    if(learnIdx>=learnUnit.patterns.length) { learnProgress[learnUnit.id]='done'; saveLearnProgress(); renderLearnDone(); return; }
+  }
+  learnFlipped=false; renderPattern();
+}
+
+function renderLearnDone() {
+  const el=document.getElementById('vtab-learn-main');
+  el.innerHTML=`<div class="learn-done">
+    <span class="material-icons big-icon">celebration</span>
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:8px">${learnUnit.title} 完了！</h2>
+    <p style="color:var(--muted);margin-bottom:24px">${learnUnit.patterns.length}パターンを練習しました</p>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button class="btn btn-gray" onclick="startUnit('${learnUnit.id}')">もう一度</button>
+      <button class="btn btn-green" onclick="backToUnits()">ユニット一覧へ</button>
+    </div>
+  </div>`;
+}
+
 // Auth state
 auth.onAuthStateChanged(async user => {
   if (user) {
@@ -856,12 +1090,14 @@ auth.onAuthStateChanged(async user => {
     document.getElementById('login-overlay').style.display = 'none';
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('user-name').textContent = user.displayName || user.email;
-    const [ss, vs] = await Promise.all([
+    const [ss, vs, ls] = await Promise.all([
       db.collection('users').doc(user.uid).collection('d').doc('s').get(),
-      db.collection('users').doc(user.uid).collection('d').doc('v').get()
+      db.collection('users').doc(user.uid).collection('d').doc('v').get(),
+      db.collection('users').doc(user.uid).collection('d').doc('learn').get()
     ]);
     _study = ss.exists ? (ss.data().r || {}) : {};
     _vocab = vs.exists ? (vs.data().l || []) : [];
+    learnProgress = ls.exists ? (ls.data().p || {}) : {};
     // localStorageからの移行（初回ログイン時）
     if (!ss.exists) {
       const ls = JSON.parse(localStorage.getItem('eng_study_v1') || '{}');
