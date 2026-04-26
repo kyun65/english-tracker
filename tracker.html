@@ -702,7 +702,6 @@ function renderFC() {
   if(!session.length) return;
   if(sIdx>=session.length) { renderSessionDone(); return; }
   const w=session[sIdx];
-  const illustUrl = `https://loremflickr.com/600/300/${encodeURIComponent(w.en.split(' ')[0])}`;
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <span style="font-size:12px;color:var(--muted)">${sIdx+1} / ${session.length}</span>
@@ -722,10 +721,7 @@ function renderFC() {
           <div class="card-face card-back">
             <div class="card-illust-wrap">
               <div class="card-illust-ph" id="illust-ph"><span class="material-icons" style="font-size:28px">image</span><span>読み込み中...</span></div>
-              <img class="card-illust" src="${illustUrl}"
-                onload="document.getElementById('illust-ph').style.display='none';this.style.opacity=1"
-                onerror="document.getElementById('illust-ph').innerHTML='<span class=\'material-icons\' style=\'font-size:32px\'>landscape</span>';this.style.display='none'"
-                style="opacity:0">
+              <img class="card-illust" id="card-illust-img" style="display:none;opacity:0">
             </div>
             <div class="card-back-inner">
               <div class="card-ja">${esc(w.ja)}</div>
@@ -749,6 +745,30 @@ function renderFC() {
       </div>
     </div>
     <div class="skip-row"><button class="btn btn-gray" style="font-size:12px;padding:8px 16px" onclick="skip()">スキップ →</button></div>`;
+  loadCardIllust(w.en);
+}
+
+async function loadCardIllust(word) {
+  const imgEl = document.getElementById('card-illust-img');
+  const phEl  = document.getElementById('illust-ph');
+  if (!imgEl || !phEl) return;
+  const keyword = word.split(' ')[0];
+  try {
+    const res  = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(keyword)}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const src  = data.thumbnail && data.thumbnail.source;
+    if (src) {
+      imgEl.onload  = () => { phEl.style.display='none'; imgEl.style.opacity='1'; };
+      imgEl.onerror = () => { phEl.innerHTML='<span class="material-icons" style="font-size:32px">image_not_supported</span>'; };
+      imgEl.style.display = 'block';
+      imgEl.src = src;
+    } else {
+      phEl.innerHTML = '<span class="material-icons" style="font-size:32px">image_not_supported</span>';
+    }
+  } catch {
+    phEl.innerHTML = '<span class="material-icons" style="font-size:32px">image_not_supported</span>';
+  }
 }
 
 function flipCard() {
