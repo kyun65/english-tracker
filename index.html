@@ -118,19 +118,39 @@
     .pbar-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width .4s ease; }
 
     /* Flashcard */
-    .fc-area { perspective: 1000px; margin-bottom: 16px; }
-    .flashcard { position: relative; height: 220px; cursor: pointer; user-select: none; }
-    .card-inner { position: absolute; inset: 0; transition: transform .4s ease; transform-style: preserve-3d; }
+    .fc-area { perspective: 1200px; margin-bottom: 20px; }
+    .flashcard { position: relative; height: 390px; cursor: pointer; user-select: none; }
+    .card-inner { position: absolute; inset: 0; transition: transform .55s cubic-bezier(.4,0,.2,1); transform-style: preserve-3d; }
     .card-inner.flipped { transform: rotateY(180deg); }
-    .card-face { position: absolute; inset: 0; backface-visibility: hidden; background: var(--bg3); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
-    .card-back { transform: rotateY(180deg); background: rgba(88,166,255,.04); border-color: rgba(88,166,255,.25); }
-    .card-word { font-size: 34px; font-weight: 800; margin-bottom: 8px; }
-    .card-hint { font-size: 12px; color: var(--muted); }
-    .card-ja { font-size: 26px; font-weight: 700; color: var(--blue); margin-bottom: 10px; }
-    .card-ex { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 360px; }
-    .audio-row { display: flex; gap: 8px; margin-top: 12px; }
-    .audio-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg2); color: var(--muted); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+    .card-face {
+      position: absolute; inset: 0; backface-visibility: hidden;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 20px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 28px 24px;
+      text-align: center; box-shadow: 0 4px 28px rgba(0,0,0,.07);
+    }
+    .card-back {
+      transform: rotateY(180deg);
+      background: var(--bg2);
+      justify-content: flex-start;
+      align-items: stretch;
+      padding: 0;
+      overflow: hidden;
+    }
+    .card-back-inner { display: flex; flex-direction: column; align-items: center; padding: 16px 20px 20px; flex: 1; overflow: hidden; }
+    .card-word { font-size: 44px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; }
+    .card-hint { font-size: 12px; color: var(--muted); margin-top: 28px; display: flex; align-items: center; gap: 4px; }
+    .card-ja { font-size: 30px; font-weight: 800; color: var(--blue); margin-bottom: 8px; }
+    .card-en-back { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 10px; letter-spacing: .3px; }
+    .card-ex { font-size: 12px; color: var(--muted); line-height: 1.7; text-align: center; }
+    .audio-row { display: flex; gap: 8px; margin-top: 10px; }
+    .audio-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg3); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
     .audio-btn:hover { border-color: var(--blue); color: var(--blue); }
+    /* Illustration */
+    .card-illust-wrap { width: 100%; height: 150px; overflow: hidden; border-radius: 20px 20px 0 0; flex-shrink: 0; position: relative; background: var(--bg3); }
+    .card-illust { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .4s; }
+    .card-illust-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; color: var(--muted); font-size: 12px; }
+    .card-divider { width: 40px; height: 3px; border-radius: 2px; background: var(--border); margin: 4px 0 12px; }
     .fc-actions { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
     .fc-counter { text-align: center; font-size: 13px; color: var(--muted); }
     .judge-btn { padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .2s; border: 1px solid; }
@@ -138,15 +158,15 @@
     .judge-no { background: rgba(248,81,73,.1); border-color: var(--red); color: var(--red); }
     .judge-yes { background: rgba(57,211,83,.1); border-color: var(--green); color: var(--green); }
     .srs-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 8px; }
-    .srs-btn { display: flex; flex-direction: column; align-items: center; padding: 10px 6px; border-radius: 10px; border: 1px solid; font-weight: 700; cursor: pointer; transition: opacity .2s; gap: 2px; }
-    .srs-btn:hover { opacity: .8; }
+    .srs-btn { display: flex; flex-direction: column; align-items: center; padding: 12px 6px; border-radius: 12px; border: 1px solid; font-weight: 700; cursor: pointer; transition: all .15s; gap: 3px; }
+    .srs-btn:hover { opacity: .8; transform: translateY(-1px); }
+    .srs-btn:active { transform: translateY(0); }
     .srs-btn .srs-label { font-size: 13px; }
-    .srs-btn .srs-interval { font-size: 10px; opacity: .7; }
+    .srs-btn .srs-interval { font-size: 10px; opacity: .65; }
     .srs-again { background: rgba(220,38,38,.08); border-color: var(--red); color: var(--red); }
     .srs-hard  { background: rgba(202,138,4,.08); border-color: var(--yellow); color: var(--yellow); }
     .srs-good  { background: rgba(37,99,235,.08); border-color: var(--blue); color: var(--blue); }
     .srs-easy  { background: rgba(22,163,74,.08); border-color: var(--green); color: var(--green); }
-    .card-en-back { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
     .skip-row { text-align: center; margin-top: 8px; }
     .session-done { text-align: center; padding: 40px 20px; }
     .session-done .big { font-size: 48px; margin-bottom: 16px; }
@@ -682,30 +702,39 @@ function renderFC() {
   if(!session.length) return;
   if(sIdx>=session.length) { renderSessionDone(); return; }
   const w=session[sIdx];
-  const cardH = w.img ? '320px' : '220px';
+  const illustUrl = `https://source.unsplash.com/600x300/?${encodeURIComponent(w.en.split(' ')[0])}`;
   el.innerHTML=`
-    <div style="text-align:right;font-size:12px;color:var(--muted);margin-bottom:8px">${sIdx+1} / ${session.length}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:12px;color:var(--muted)">${sIdx+1} / ${session.length}</span>
+      <span style="font-size:12px;color:var(--muted)">タップしてめくる</span>
+    </div>
     <div class="fc-area" onclick="flipCard()">
-      <div class="flashcard" style="height:${cardH}">
+      <div class="flashcard">
         <div class="card-inner ${sFlipped?'flipped':''}" id="c-inner">
+          <!-- Front -->
           <div class="card-face">
-            ${w.img?`
-              <div id="fc-img-ph" style="width:100%;height:130px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;margin-bottom:12px;color:var(--muted)"><span class="material-icons" style="font-size:14px">image</span>&nbsp;画像を読み込み中...</div>
-              <img id="fc-img" src="${w.img}" style="display:none;width:100%;height:130px;object-fit:cover;border-radius:10px;margin-bottom:12px"
-                onload="document.getElementById('fc-img-ph').style.display='none';this.style.display='block'"
-                onerror="document.getElementById('fc-img-ph').innerHTML='<span class=\'material-icons\' style=\'font-size:32px\'>image</span>';">
-            `:''}
-            <div class="card-word" style="font-size:${w.img?'26px':'34px'}">${esc(w.en)}</div>
-            ${w.pos?posBadge(w.pos):''}
-            <div class="card-hint" style="margin-top:6px">タップして答えを確認</div>
+            ${w.pos?`<div style="margin-bottom:12px">${posBadge(w.pos)}</div>`:''}
+            <div class="card-word">${esc(w.en)}</div>
+            <div class="card-divider"></div>
+            <div class="card-hint"><span class="material-icons" style="font-size:16px">touch_app</span>タップして答えを確認</div>
           </div>
+          <!-- Back -->
           <div class="card-face card-back">
-            <div class="card-en-back">${esc(w.en)}</div>
-            <div class="card-ja">${esc(w.ja)}</div>
-            ${w.example?`<div class="card-ex">${esc(w.example)}</div>`:''}
-            <div class="audio-row">
-              <button class="audio-btn" onclick="event.stopPropagation();speakW('en')" title="英語を聞く"><span class="material-icons">volume_up</span></button>
-              ${w.example?`<button class="audio-btn" onclick="event.stopPropagation();speakW('ex')" title="例文を聞く"><span class="material-icons">campaign</span></button>`:''}
+            <div class="card-illust-wrap">
+              <div class="card-illust-ph" id="illust-ph"><span class="material-icons" style="font-size:28px">image</span><span>読み込み中...</span></div>
+              <img class="card-illust" src="${illustUrl}"
+                onload="document.getElementById('illust-ph').style.display='none';this.style.opacity=1"
+                onerror="document.getElementById('illust-ph').innerHTML='<span class=\'material-icons\' style=\'font-size:32px\'>landscape</span>';this.style.display='none'"
+                style="opacity:0">
+            </div>
+            <div class="card-back-inner">
+              <div class="card-ja">${esc(w.ja)}</div>
+              <div class="card-en-back">${esc(w.en)}</div>
+              ${w.example?`<div class="card-ex">${esc(w.example)}</div>`:''}
+              <div class="audio-row">
+                <button class="audio-btn" onclick="event.stopPropagation();speakW('en')" title="英語を聞く"><span class="material-icons">volume_up</span></button>
+                ${w.example?`<button class="audio-btn" onclick="event.stopPropagation();speakW('ex')" title="例文を聞く"><span class="material-icons">campaign</span></button>`:''}
+              </div>
             </div>
           </div>
         </div>
