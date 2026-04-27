@@ -89,13 +89,15 @@
     .rec-save-btn.saved { background: var(--green); }
     .rec-card-full { grid-column: span 2; }
     .rec-radio-body { display: flex; flex-direction: column; gap: 10px; }
-    .week-chart { display: grid; grid-template-columns: repeat(7,1fr); gap: 8px; align-items: end; height: 90px; }
-    .bar-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
-    .bar { width: 100%; border-radius: 4px 4px 0 0; background: rgba(37,99,235,.35); min-height: 3px; transition: height .4s ease; }
-    .bar.today-bar { background: var(--green); }
-    .bar.empty-bar { background: var(--bg2); border: 1px solid var(--border); }
-    .bar-day { font-size: 11px; color: var(--muted); margin-top: 4px; }
-    .bar-val { font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .week-chart { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; align-items: end; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .bar-track { width: 100%; height: 100px; background: var(--bg3); border-radius: 8px; overflow: hidden; display: flex; align-items: flex-end; position: relative; }
+    .bar { width: 100%; border-radius: 8px; background: rgba(37,99,235,.25); transition: height .5s cubic-bezier(.4,0,.2,1); }
+    .bar.today-bar { background: linear-gradient(180deg, rgba(22,163,74,.9), rgba(22,163,74,.5)); }
+    .bar.goal-bar { background: linear-gradient(180deg, rgba(37,99,235,.8), rgba(37,99,235,.4)); }
+    .bar-day { font-size: 11px; font-weight: 600; color: var(--muted); }
+    .bar-day.today { color: var(--green); }
+    .bar-val { font-size: 10px; color: var(--muted); }
 
     /* Calendar */
     .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -453,7 +455,10 @@
     </div>
   </div>
   <div class="card">
-    <div class="card-title">今週の学習時間</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="card-title" style="margin-bottom:0">今週の学習時間</div>
+      <div id="week-total" style="font-size:12px;color:var(--muted)"></div>
+    </div>
     <div class="week-chart" id="h-week"></div>
   </div>
 </div>
@@ -649,15 +654,25 @@ function renderHome() {
   document.getElementById('rem-label').textContent = rem===0 ? '今日の学習' : '今日の残り学習時間';
 
   const el = document.getElementById('h-week'); el.innerHTML = '';
-  const maxM = Math.max(...Array.from({length:7},(_,i)=>{const d=new Date(now);d.setDate(d.getDate()-(6-i));return data[d.toISOString().slice(0,10)]?.mins||0;}),GOAL_MIN,1);
-  for (let i=6;i>=0;i--) {
-    const d=new Date(now); d.setDate(d.getDate()-i);
-    const k=d.toISOString().slice(0,10), m=data[k]?.mins||0, isT=k===t, isFut=k>t;
-    const pct=isFut?0:Math.max((m/maxM)*100,m>0?8:4);
+  const days7 = Array.from({length:7},(_,i)=>{ const d=new Date(now); d.setDate(d.getDate()-(6-i)); return d; });
+  const vals = days7.map(d=>data[d.toISOString().slice(0,10)]?.mins||0);
+  const maxM = Math.max(...vals, GOAL_MIN, 1);
+  const weekTotal = vals.reduce((a,b)=>a+b,0);
+  const wt = document.getElementById('week-total');
+  if(wt) wt.textContent = `合計 ${weekTotal}分`;
+  days7.forEach((d,i)=>{
+    const k=d.toISOString().slice(0,10), m=vals[i], isT=k===t, isFut=k>t;
+    const pct = isFut ? 0 : m>0 ? Math.max((m/maxM)*100, 6) : 0;
+    const metGoal = m>=GOAL_MIN;
     const col=document.createElement('div'); col.className='bar-col';
-    col.innerHTML=`<div class="bar ${isT?'today-bar':''} ${!isFut&&m===0?'empty-bar':''}" style="height:${isFut?4:pct}%"></div><div class="bar-day" style="${isT?'color:var(--green);font-weight:700':''}">${DJ[d.getDay()]}</div><div class="bar-val">${isFut?'':m>0?m+'分':'-'}</div>`;
+    col.innerHTML=`
+      <div style="font-size:10px;color:${isT?'var(--green)':m>0?'var(--text)':'var(--muted)'};font-weight:${m>0?'700':'400'};min-height:16px;text-align:center">${isFut?'':m>0?m+'分':''}</div>
+      <div class="bar-track">
+        <div class="bar ${isT?'today-bar':metGoal?'goal-bar':''}" style="height:${pct}%"></div>
+      </div>
+      <div class="bar-day ${isT?'today':''}">${DJ[d.getDay()]}</div>`;
     el.appendChild(col);
-  }
+  });
   prefillRecord();
 }
 
