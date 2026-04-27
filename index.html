@@ -91,12 +91,11 @@
     .rec-radio-body { display: flex; flex-direction: column; gap: 10px; }
     .week-chart { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; align-items: end; }
     .bar-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-    .bar-track { width: 100%; height: 100px; background: var(--bg3); border-radius: 8px; overflow: hidden; display: flex; align-items: flex-end; position: relative; }
-    .bar { width: 100%; border-radius: 8px; background: rgba(37,99,235,.25); transition: height .5s cubic-bezier(.4,0,.2,1); }
-    .bar.today-bar { background: linear-gradient(180deg, rgba(22,163,74,.9), rgba(22,163,74,.5)); }
-    .bar.goal-bar { background: linear-gradient(180deg, rgba(37,99,235,.8), rgba(37,99,235,.4)); }
+    .bar-track { width: 100%; height: 100px; background: var(--bg3); border-radius: 8px; overflow: hidden; display: flex; align-items: flex-end; }
+    .bar { width: 100%; border-radius: 8px; background: rgba(37,99,235,.3); transition: height .5s cubic-bezier(.4,0,.2,1); }
+    .bar.today-bar { background: var(--blue); }
     .bar-day { font-size: 11px; font-weight: 600; color: var(--muted); }
-    .bar-day.today { color: var(--green); }
+    .bar-day.today { color: var(--blue); font-weight: 800; }
     .bar-val { font-size: 10px; color: var(--muted); }
 
     /* Calendar */
@@ -663,12 +662,11 @@ function renderHome() {
   days7.forEach((d,i)=>{
     const k=d.toISOString().slice(0,10), m=vals[i], isT=k===t, isFut=k>t;
     const pct = isFut ? 0 : m>0 ? Math.max((m/maxM)*100, 6) : 0;
-    const metGoal = m>=GOAL_MIN;
     const col=document.createElement('div'); col.className='bar-col';
     col.innerHTML=`
-      <div style="font-size:10px;color:${isT?'var(--green)':m>0?'var(--text)':'var(--muted)'};font-weight:${m>0?'700':'400'};min-height:16px;text-align:center">${isFut?'':m>0?m+'分':''}</div>
+      <div style="font-size:10px;color:${m>0?'var(--blue)':'transparent'};font-weight:700;min-height:16px;text-align:center">${m>0?m+'分':''}</div>
       <div class="bar-track">
-        <div class="bar ${isT?'today-bar':metGoal?'goal-bar':''}" style="height:${pct}%"></div>
+        <div class="bar ${isT?'today-bar':''}" style="height:${pct}%"></div>
       </div>
       <div class="bar-day ${isT?'today':''}">${DJ[d.getDay()]}</div>`;
     el.appendChild(col);
