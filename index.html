@@ -603,16 +603,31 @@ function renderHome() {
     col.innerHTML=`<div class="bar ${isT?'today-bar':''} ${!isFut&&m===0?'empty-bar':''}" style="height:${isFut?4:pct}%"></div><div class="bar-day" style="${isT?'color:var(--green);font-weight:700':''}">${DJ[d.getDay()]}</div><div class="bar-val">${isFut?'':m>0?m+'分':'-'}</div>`;
     el.appendChild(col);
   }
+  prefillRecord();
 }
 
 function saveRecord() {
-  const mins = +document.getElementById('i-min').value||0;
-  const words = +document.getElementById('i-words').value||0;
+  const minsStr = document.getElementById('i-min').value;
+  const wordsStr = document.getElementById('i-words').value;
   const d = getS(), t = todayStr();
-  d[t] = {...(d[t]||{}), mins, words, radio:radioVal, note:d[t]?.note||''};
+  const existing = d[t] || {mins:0, words:0, radio:false, note:''};
+  d[t] = {
+    ...existing,
+    ...(minsStr  !== '' ? {mins:  Math.max(0,+minsStr)}  : {}),
+    ...(wordsStr !== '' ? {words: Math.max(0,+wordsStr)} : {}),
+    radio: radioVal,
+  };
   setS(d);
-  document.getElementById('i-min').value=''; document.getElementById('i-words').value='';
-  setRadio(true); renderHome(); showToast();
+  renderHome(); showToast();
+}
+
+function prefillRecord() {
+  const rec = getS()[todayStr()] || {};
+  const minEl = document.getElementById('i-min');
+  const wEl   = document.getElementById('i-words');
+  if (minEl && rec.mins)  minEl.value  = rec.mins;
+  if (wEl   && rec.words) wEl.value    = rec.words;
+  setRadio(rec.radio ?? true);
 }
 
 // ── Calendar ──
