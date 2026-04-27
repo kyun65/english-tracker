@@ -659,7 +659,9 @@ function renderHome() {
   document.getElementById('rem-label').textContent = rem===0 ? '今日の学習' : '今日の残り学習時間';
 
   const el = document.getElementById('h-week'); el.innerHTML = '';
-  const days7 = Array.from({length:7},(_,i)=>{ const d=new Date(now); d.setDate(d.getDate()-(6-i)); return d; });
+  const dow = now.getDay(); // 0=Sun
+  const monday = new Date(now); monday.setDate(now.getDate() - (dow===0 ? 6 : dow-1));
+  const days7 = Array.from({length:7},(_,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return d; });
   const vals = days7.map(d=>data[d.toISOString().slice(0,10)]?.mins||0);
   const weekTotal = vals.reduce((a,b)=>a+b,0);
   const wt = document.getElementById('week-total');
