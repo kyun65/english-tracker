@@ -89,14 +89,20 @@
     .rec-save-btn.saved { background: var(--green); }
     .rec-card-full { grid-column: span 2; }
     .rec-radio-body { display: flex; flex-direction: column; gap: 10px; }
-    .week-chart { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; align-items: end; }
-    .bar-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-    .bar-track { width: 100%; height: 100px; background: var(--bg3); border-radius: 8px; overflow: hidden; display: flex; align-items: flex-end; }
-    .bar { width: 100%; border-radius: 8px; background: rgba(37,99,235,.3); transition: height .5s cubic-bezier(.4,0,.2,1); }
-    .bar.today-bar { background: var(--blue); }
-    .bar-day { font-size: 11px; font-weight: 600; color: var(--muted); }
-    .bar-day.today { color: var(--blue); font-weight: 800; }
-    .bar-val { font-size: 10px; color: var(--muted); }
+    .week-chart { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
+    .wcal-cell { display: flex; flex-direction: column; align-items: center; padding: 8px 2px 6px; background: var(--bg2); border-radius: 12px; border: 1px solid var(--border); gap: 4px; }
+    .wcal-cell.wcal-today { border-color: var(--blue); background: rgba(37,99,235,.04); }
+    .wcal-cell.wcal-future { opacity: .45; }
+    .wcal-day { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .3px; }
+    .wcal-day.today { color: var(--blue); }
+    .wcal-date { font-size: 14px; font-weight: 800; color: var(--text); line-height: 1; }
+    .wcal-check { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; transition: all .2s; background: var(--bg3); }
+    .wcal-check .material-icons { font-size: 17px !important; color: transparent; }
+    .wcal-check.studied .material-icons { color: var(--blue); }
+    .wcal-check.studied { border-color: var(--blue); background: rgba(37,99,235,.08); }
+    .wcal-check.goal .material-icons { color: var(--green); }
+    .wcal-check.goal { border-color: var(--green); background: rgba(22,163,74,.1); }
+    .wcal-mins { font-size: 9px; color: var(--muted); font-weight: 600; min-height: 12px; }
 
     /* Calendar */
     .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -655,21 +661,21 @@ function renderHome() {
   const el = document.getElementById('h-week'); el.innerHTML = '';
   const days7 = Array.from({length:7},(_,i)=>{ const d=new Date(now); d.setDate(d.getDate()-(6-i)); return d; });
   const vals = days7.map(d=>data[d.toISOString().slice(0,10)]?.mins||0);
-  const maxM = Math.max(...vals, GOAL_MIN, 1);
   const weekTotal = vals.reduce((a,b)=>a+b,0);
   const wt = document.getElementById('week-total');
-  if(wt) wt.textContent = `合計 ${weekTotal}分`;
+  if(wt) wt.textContent = `今週 ${weekTotal}分`;
   days7.forEach((d,i)=>{
     const k=d.toISOString().slice(0,10), m=vals[i], isT=k===t, isFut=k>t;
-    const pct = isFut ? 0 : m>0 ? Math.max((m/maxM)*100, 6) : 0;
-    const col=document.createElement('div'); col.className='bar-col';
-    col.innerHTML=`
-      <div style="font-size:10px;color:${m>0?'var(--blue)':'transparent'};font-weight:700;min-height:16px;text-align:center">${m>0?m+'分':''}</div>
-      <div class="bar-track">
-        <div class="bar ${isT?'today-bar':''}" style="height:${pct}%"></div>
-      </div>
-      <div class="bar-day ${isT?'today':''}">${DJ[d.getDay()]}</div>`;
-    el.appendChild(col);
+    const metGoal=m>=GOAL_MIN, studied=m>0&&!isFut;
+    const checkCls=metGoal?'goal':studied?'studied':'';
+    const cell=document.createElement('div');
+    cell.className=`wcal-cell${isT?' wcal-today':''}${isFut?' wcal-future':''}`;
+    cell.innerHTML=`
+      <div class="wcal-day${isT?' today':''}">${DJ[d.getDay()]}</div>
+      <div class="wcal-date">${d.getDate()}</div>
+      <div class="wcal-check ${checkCls}"><span class="material-icons">check</span></div>
+      <div class="wcal-mins">${studied?m+'分':''}</div>`;
+    el.appendChild(cell);
   });
   prefillRecord();
 }
