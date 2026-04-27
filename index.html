@@ -70,6 +70,16 @@
     .toggle-row { display: flex; gap: 6px; }
     .tbtn { flex: 1; padding: 9px 6px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--muted); font-size: 13px; cursor: pointer; transition: all .2s; }
     .tbtn.on { border-color: var(--green); background: rgba(57,211,83,.12); color: var(--green); font-weight: 700; }
+    .rec-rows { display: flex; flex-direction: column; gap: 10px; }
+    .rec-row { display: flex; align-items: center; gap: 10px; background: var(--bg3); border-radius: 10px; padding: 10px 12px; }
+    .rec-icon { font-size: 20px !important; flex-shrink: 0; }
+    .rec-label { font-size: 13px; font-weight: 600; width: 90px; flex-shrink: 0; }
+    .rec-input { width: 64px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; color: var(--text); font-size: 15px; font-weight: 700; outline: none; text-align: center; flex-shrink: 0; }
+    .rec-input:focus { border-color: var(--blue); }
+    .rec-unit { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+    .rec-save-btn { margin-left: auto; padding: 7px 16px; border-radius: 8px; border: none; background: var(--blue); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; transition: opacity .2s; }
+    .rec-save-btn:hover { opacity: .85; }
+    .rec-save-btn.saved { background: var(--green); }
     .week-chart { display: grid; grid-template-columns: repeat(7,1fr); gap: 8px; align-items: end; height: 90px; }
     .bar-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
     .bar { width: 100%; border-radius: 4px 4px 0 0; background: rgba(37,99,235,.35); min-height: 3px; transition: height .4s ease; }
@@ -384,17 +394,30 @@
   </div>
   <div class="card">
     <div class="card-title">学習を記録する</div>
-    <div class="form-grid">
-      <div class="fg"><label>学習時間（分）</label><input type="number" id="i-min" min="0" max="180" placeholder="30"></div>
-      <div class="fg"><label>ユメタン（単語数）</label><input type="number" id="i-words" min="0" max="500" placeholder="10"></div>
-      <div class="fg">
-        <label>ラジオ英会話</label>
-        <div class="toggle-row">
+    <div class="rec-rows">
+      <div class="rec-row">
+        <span class="material-icons rec-icon" style="color:var(--blue)">timer</span>
+        <div class="rec-label">学習時間</div>
+        <input type="number" class="rec-input" id="i-min" min="0" max="300" placeholder="0">
+        <span class="rec-unit">分</span>
+        <button class="rec-save-btn" onclick="saveSingle('mins')">保存</button>
+      </div>
+      <div class="rec-row">
+        <span class="material-icons rec-icon" style="color:var(--yellow)">menu_book</span>
+        <div class="rec-label">ユメタン</div>
+        <input type="number" class="rec-input" id="i-words" min="0" max="500" placeholder="0">
+        <span class="rec-unit">単語</span>
+        <button class="rec-save-btn" onclick="saveSingle('words')">保存</button>
+      </div>
+      <div class="rec-row">
+        <span class="material-icons rec-icon" style="color:var(--purple)">radio</span>
+        <div class="rec-label">ラジオ英会話</div>
+        <div class="toggle-row" style="flex:1">
           <button class="tbtn on" id="btn-yes" onclick="setRadio(true)"><span class="material-icons" style="font-size:14px">check</span> やった</button>
           <button class="tbtn" id="btn-no" onclick="setRadio(false)"><span class="material-icons" style="font-size:14px">close</span> なし</button>
         </div>
+        <button class="rec-save-btn" onclick="saveSingle('radio')">保存</button>
       </div>
-      <button class="btn btn-blue" onclick="saveRecord()">記録する</button>
     </div>
   </div>
   <div class="card">
@@ -606,28 +629,35 @@ function renderHome() {
   prefillRecord();
 }
 
-function saveRecord() {
-  const minsStr = document.getElementById('i-min').value;
-  const wordsStr = document.getElementById('i-words').value;
+function saveSingle(field) {
   const d = getS(), t = todayStr();
   const existing = d[t] || {mins:0, words:0, radio:false, note:''};
-  d[t] = {
-    ...existing,
-    ...(minsStr  !== '' ? {mins:  Math.max(0,+minsStr)}  : {}),
-    ...(wordsStr !== '' ? {words: Math.max(0,+wordsStr)} : {}),
-    radio: radioVal,
-  };
+  if (field === 'mins') {
+    const v = +document.getElementById('i-min').value;
+    if (isNaN(v) || document.getElementById('i-min').value === '') { showToast('時間を入力してください'); return; }
+    d[t] = {...existing, mins: Math.max(0, v)};
+  } else if (field === 'words') {
+    const v = +document.getElementById('i-words').value;
+    if (isNaN(v) || document.getElementById('i-words').value === '') { showToast('単語数を入力してください'); return; }
+    d[t] = {...existing, words: Math.max(0, v)};
+  } else if (field === 'radio') {
+    d[t] = {...existing, radio: radioVal};
+  }
   setS(d);
-  renderHome(); showToast();
+  // ボタンを一瞬緑にしてフィードバック
+  const btns = document.querySelectorAll('.rec-save-btn');
+  const idx = field==='mins'?0:field==='words'?1:2;
+  const btn = btns[idx]; if(btn){ btn.classList.add('saved'); btn.textContent='✓'; setTimeout(()=>{ btn.classList.remove('saved'); btn.textContent='保存'; },1200); }
+  renderHome();
 }
 
 function prefillRecord() {
   const rec = getS()[todayStr()] || {};
   const minEl = document.getElementById('i-min');
   const wEl   = document.getElementById('i-words');
-  if (minEl && rec.mins)  minEl.value  = rec.mins;
-  if (wEl   && rec.words) wEl.value    = rec.words;
-  setRadio(rec.radio ?? true);
+  if (minEl) minEl.value = rec.mins || '';
+  if (wEl)   wEl.value   = rec.words || '';
+  setRadio(rec.radio ?? false);
 }
 
 // ── Calendar ──
