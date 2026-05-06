@@ -288,6 +288,15 @@
     .unit-badge { font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: 700; }
     .unit-badge.done { background: rgba(22,163,74,.1); color: var(--green); border: 1px solid rgba(22,163,74,.3); }
     .unit-badge.new { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+    .unit-badge.next { background: rgba(37,99,235,.1); color: var(--blue); border: 1px solid rgba(37,99,235,.3); }
+    .unit-card.next-up { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    .next-unit-banner { display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg,rgba(37,99,235,.07),rgba(124,58,237,.07)); border: 1px solid rgba(37,99,235,.2); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; cursor: pointer; transition: opacity .2s; }
+    .next-unit-banner:hover { opacity: .85; }
+    .next-unit-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--blue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .next-unit-icon .material-icons { color: #fff; font-size: 20px !important; }
+    .next-unit-label { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+    .next-unit-title { font-size: 15px; font-weight: 800; }
+    .next-unit-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
     .learn-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
     .back-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer; color: var(--text); font-size: 13px; display: flex; align-items: center; gap: 4px; transition: all .2s; white-space: nowrap; }
     .back-btn:hover { border-color: var(--blue); color: var(--blue); }
@@ -748,6 +757,10 @@ function analyzeWeaknesses() {
   // 単語登録が少ない
   if(v.length<10) issues.push({icon:'library_add', text:'登録単語がまだ少ないです。ユメタンに単語を追加しましょう'});
 
+  // 文法の次ステップ
+  const nextU=getNextUnit();
+  if(nextU) issues.push({icon:'school', text:`文法：次は「${nextU.title}」（${nextU.label}）に取り組みましょう`});
+
   return {issues, goods, avgMins, studyDays, overdue, weakSec};
 }
 
@@ -771,10 +784,12 @@ function generateWeekPlan(analysis) {
     const k=d.toISOString().slice(0,10);
     const isWeekend=i>=5;
     const mins=isWeekend?Math.round(targetMins*0.7):targetMins;
+    const nextU=getNextUnit();
+    const grammarLabel=nextU?`${nextU.title}`:null;
     const tasks=[];
     if(overdue>0) tasks.push(`復習 ${dailyReview}単語`);
     else tasks.push(`新規 ${dailyNew}単語`);
-    if(!isWeekend) tasks.push('文法1パターン');
+    if(!isWeekend&&grammarLabel) tasks.push(`文法: ${grammarLabel}`);
     return {day:DJ7[i], date:d.getDate(), key:k, mins, tasks, isPast:k<today, isToday:k===today};
   });
 }
@@ -1416,6 +1431,14 @@ const CURRICULUM = {
 
 let learnGrade=1, learnUnit=null, learnIdx=0, learnFlipped=false, learnProgress={};
 
+function getCurriculumPath() {
+  return [1,2,3].flatMap(g => CURRICULUM[g].units.map(u => ({...u, grade:g, label:CURRICULUM[g].label})));
+}
+
+function getNextUnit() {
+  return getCurriculumPath().find(u => learnProgress[u.id] !== 'done') || null;
+}
+
 async function saveLearnProgress() {
   if(_user) db.collection('users').doc(_user.uid).collection('d').doc('learn').set({p:learnProgress}).catch(()=>{});
 }
@@ -1425,20 +1448,38 @@ function renderLearn() { learnUnit ? renderPattern() : renderUnitList(); }
 function renderUnitList() {
   const el=document.getElementById('vtab-learn-main');
   const g=CURRICULUM[learnGrade];
+  const next=getNextUnit();
   const tabs=[1,2,3].map(n=>`<button class="grade-btn ${n===learnGrade?'active':''}" onclick="setLearnGrade(${n})">${CURRICULUM[n].label}</button>`).join('');
+
+  const banner = next ? `
+    <div class="next-unit-banner" onclick="startUnit('${next.id}',${next.grade})">
+      <div class="next-unit-icon"><span class="material-icons">play_arrow</span></div>
+      <div style="flex:1;min-width:0">
+        <div class="next-unit-label">次のおすすめ</div>
+        <div class="next-unit-title">${next.title}</div>
+        <div class="next-unit-sub">${next.sub}</div>
+      </div>
+      <span class="material-icons" style="color:var(--blue);flex-shrink:0">chevron_right</span>
+    </div>` : `
+    <div style="background:rgba(22,163,74,.07);border:1px solid rgba(22,163,74,.2);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+      <span class="material-icons" style="color:var(--green)">military_tech</span>
+      <div style="font-size:14px;font-weight:700;color:var(--green)">全ユニット完了！素晴らしい！</div>
+    </div>`;
+
   const units=g.units.map(u=>{
     const done=learnProgress[u.id]==='done';
-    return `<div class="unit-card ${done?'done':''}" onclick="startUnit('${u.id}','${learnGrade}')">
+    const isNext=next&&next.id===u.id;
+    return `<div class="unit-card ${done?'done':isNext?'next-up':''}" onclick="startUnit('${u.id}',${learnGrade})">
       <div class="unit-grade">${g.label}</div>
       <div class="unit-title">${u.title}</div>
       <div class="unit-sub">${u.sub}</div>
       <div class="unit-meta">
         <span class="unit-count">${u.patterns.length}パターン</span>
-        <span class="unit-badge ${done?'done':'new'}">${done?'✓ 完了':'未学習'}</span>
+        <span class="unit-badge ${done?'done':isNext?'next':'new'}">${done?'✓ 完了':isNext?'★ おすすめ':'未学習'}</span>
       </div>
     </div>`;
   }).join('');
-  el.innerHTML=`<div class="grade-tabs">${tabs}</div><div class="unit-grid">${units}</div>`;
+  el.innerHTML=`${banner}<div class="grade-tabs">${tabs}</div><div class="unit-grid">${units}</div>`;
 }
 
 function setLearnGrade(g) { learnGrade=g; renderUnitList(); }
