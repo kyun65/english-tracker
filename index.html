@@ -315,6 +315,32 @@
     .learn-done { text-align: center; padding: 40px 20px; }
     .learn-done .big-icon { font-size: 56px; color: var(--green); margin-bottom: 16px; }
 
+    /* Status page */
+    .status-profile { background: linear-gradient(135deg, #0f2044 0%, #1e1060 100%); border-radius: 16px; padding: 20px; margin-bottom: 14px; color: #fff; }
+    .status-avatar { width: 56px; height: 56px; background: rgba(255,255,255,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+    .status-overall-big { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; flex-shrink: 0; }
+    .status-mini-stat { background: rgba(255,255,255,.08); border-radius: 10px; padding: 10px 6px; text-align: center; color: #fff; }
+    .status-grade-badge { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; font-size: 16px; font-weight: 900; flex-shrink: 0; }
+    .grade-E  { background: #64748b; color: #fff; }
+    .grade-D  { background: #8b5cf6; color: #fff; }
+    .grade-C  { background: #3b82f6; color: #fff; }
+    .grade-B  { background: #10b981; color: #fff; }
+    .grade-A  { background: #f59e0b; color: #fff; }
+    .grade-S  { background: #f97316; color: #fff; }
+    .grade-SS { background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; box-shadow: 0 2px 8px rgba(239,68,68,.4); }
+    .stat-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-icon-wrap { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .stat-main { flex: 1; min-width: 0; }
+    .stat-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .stat-name { font-size: 13px; font-weight: 700; }
+    .stat-score-num { font-size: 12px; font-weight: 700; color: var(--muted); min-width: 28px; text-align: right; }
+    .stat-bar-bg { height: 7px; background: var(--bg3); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+    .stat-bar-fill { height: 100%; border-radius: 4px; transition: width .9s cubic-bezier(.4,0,.2,1); width: 0; }
+    .stat-detail { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .status-next-tip { background: rgba(37,99,235,.05); border: 1px solid rgba(37,99,235,.15); border-radius: 12px; padding: 12px 14px; margin-top: 14px; font-size: 13px; line-height: 1.6; }
+    .status-next-label { font-size: 10px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+
     /* Desktop: left sidebar */
     @media (min-width: 768px) {
       .tab-bar {
@@ -389,6 +415,10 @@
   <button class="tab-btn" data-tab="learn" onclick="showTab('learn')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 12 15 2 8.5"/><line x1="12" y1="15" x2="12" y2="22"/><polyline points="7 11.5 7 18 12 21 17 18 17 11.5"/></svg>
     学習
+  </button>
+  <button class="tab-btn" data-tab="status" onclick="showTab('status')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    ステータス
   </button>
 </nav>
 
@@ -587,6 +617,10 @@
   <div id="vtab-learn-main"></div>
 </div>
 
+<div class="tab-content" id="tab-status">
+  <div id="status-content"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -638,6 +672,7 @@ function showTab(tab) {
   if (tab === 'calendar') renderCalendar();
   if (tab === 'vocab') { showVocabView('sections'); }
   if (tab === 'learn') renderLearn();
+  if (tab === 'status') renderStatus();
 }
 
 function showToast(msg = '✓ 記録しました！') {
@@ -860,6 +895,172 @@ function renderPlan() {
           <div class="plan-day-task">${d.tasks.join('<br>')}</div>
         </div>`).join('')}
     </div>`;
+}
+
+// ── Status ──
+const GRADE_SCALE = [
+  { grade: 'SS', min: 93, color: '#ef4444' },
+  { grade: 'S',  min: 80, color: '#f97316' },
+  { grade: 'A',  min: 65, color: '#f59e0b' },
+  { grade: 'B',  min: 45, color: '#10b981' },
+  { grade: 'C',  min: 25, color: '#3b82f6' },
+  { grade: 'D',  min: 10, color: '#8b5cf6' },
+  { grade: 'E',  min: 0,  color: '#64748b' },
+];
+function getGradeInfo(score) {
+  return GRADE_SCALE.find(g => score >= g.min) || GRADE_SCALE[GRADE_SCALE.length - 1];
+}
+function getRecentKeys(n) {
+  const keys = [], now = new Date();
+  for (let i = n - 1; i >= 0; i--) { const d = new Date(now); d.setDate(d.getDate() - i); keys.push(d.toISOString().slice(0, 10)); }
+  return keys;
+}
+function calcStreak() {
+  const s = getS(), now = new Date();
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const r = s[d.toISOString().slice(0, 10)];
+    if (r && (r.mins > 0 || r.words > 0 || r.radio)) streak++; else break;
+  }
+  return streak;
+}
+function calcStatusStats() {
+  const v = getV(), s = getS(), today = todayStr();
+
+  // 語彙力: 習得単語数ベース（200単語習得=100点）
+  const mastered = v.filter(w => w.mastered).length;
+  const total = v.length;
+  const masteryRate = total > 0 ? mastered / total : 0;
+  const vocabScore = Math.min(100, Math.round(mastered * 0.5 + masteryRate * 20));
+
+  // 継続力: 連続日数 + 直近30日の頻度
+  const streak = calcStreak();
+  const last30 = getRecentKeys(30);
+  const studyDays30 = last30.filter(k => (s[k]?.mins || 0) > 0).length;
+  const consistencyScore = Math.min(100, Math.round(Math.min(60, streak * 1.5) + studyDays30 / 30 * 40));
+
+  // 文法力: 完了ユニット数/全ユニット数
+  const totalUnits = CURRICULUM_PATH.length;
+  const doneUnits = CURRICULUM_PATH.filter(item => learnProgress[item.id] === 'done').length;
+  const grammarScore = totalUnits > 0 ? Math.round(doneUnits / totalUnits * 100) : 0;
+
+  // 復習力: SRS期限内の割合
+  const wordsWithSrs = v.filter(w => w.srsDue);
+  let srsScore = v.length > 0 ? 25 : 0;
+  if (wordsWithSrs.length > 0) {
+    const nonOverdue = wordsWithSrs.filter(w => w.srsDue >= today).length;
+    srsScore = Math.round(nonOverdue / wordsWithSrs.length * 100);
+  }
+
+  // 学習時間: 直近30日の平均 vs 目標
+  const avgMins30 = Math.round(last30.reduce((a, k) => a + (s[k]?.mins || 0), 0) / 30);
+  const timeScore = Math.min(100, Math.round(avgMins30 / GOAL_MIN * 100));
+
+  return {
+    vocab:       { score: vocabScore,       detail: `習得 ${mastered}単語 / 定着率 ${Math.round(masteryRate * 100)}%` },
+    consistency: { score: consistencyScore, detail: `連続 ${streak}日 ／ 直近30日 ${studyDays30}日学習` },
+    grammar:     { score: grammarScore,     detail: `${doneUnits} / ${totalUnits} ユニット完了` },
+    srs:         { score: srsScore,         detail: wordsWithSrs.length > 0 ? `期限内 ${wordsWithSrs.filter(w => w.srsDue >= today).length} / ${wordsWithSrs.length}件` : 'SRSデータなし' },
+    time:        { score: timeScore,        detail: `直近30日 平均 ${avgMins30}分／日（目標 ${GOAL_MIN}分）` },
+  };
+}
+
+function renderStatus() {
+  const el = document.getElementById('status-content');
+  if (!el) return;
+
+  const stats = calcStatusStats();
+  const s = getS();
+  const streak = calcStreak();
+  const studyDays = Object.keys(s).filter(k => (s[k]?.mins || 0) > 0 || s[k]?.radio).length;
+  const totalMins = Object.values(s).reduce((a, r) => a + (r.mins || 0), 0);
+
+  const STAT_DEFS = [
+    { id: 'vocab',       label: '語彙力',   icon: 'auto_stories',        color: '#f59e0b', bg: 'rgba(245,158,11,.12)' },
+    { id: 'consistency', label: '継続力',   icon: 'local_fire_department', color: '#ef4444', bg: 'rgba(239,68,68,.1)' },
+    { id: 'grammar',     label: '文法力',   icon: 'school',               color: '#3b82f6', bg: 'rgba(59,130,246,.1)' },
+    { id: 'srs',         label: '復習力',   icon: 'assignment_turned_in', color: '#10b981', bg: 'rgba(16,185,129,.1)' },
+    { id: 'time',        label: '学習時間', icon: 'timer',                color: '#8b5cf6', bg: 'rgba(139,92,246,.1)' },
+  ];
+
+  const scoreSum = Object.values(stats).reduce((a, st) => a + st.score, 0);
+  const overallScore = Math.round(scoreSum / STAT_DEFS.length);
+  const overall = getGradeInfo(overallScore);
+
+  const exp = scoreSum * 10;
+  const level = Math.floor(exp / 500) + 1;
+  const expInLevel = exp % 500;
+  const nextLevelExp = 500;
+
+  // Next tip
+  const nextU = getNextUnit();
+  const weakest = STAT_DEFS.reduce((a, d) => stats[d.id].score < stats[a.id].score ? d : a, STAT_DEFS[0]);
+
+  el.innerHTML = `
+    <div class="status-profile">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+        <div class="status-avatar">📚</div>
+        <div style="flex:1">
+          <div style="font-size:10px;opacity:.55;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px">English Learner</div>
+          <div style="font-size:24px;font-weight:900;letter-spacing:-1px">Lv. ${level}</div>
+          <div style="font-size:10px;opacity:.55;margin-top:1px">EXP ${expInLevel} / ${nextLevelExp}</div>
+          <div style="height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:6px;overflow:hidden">
+            <div style="height:100%;width:${Math.round(expInLevel/nextLevelExp*100)}%;background:rgba(255,255,255,.6);border-radius:2px;transition:width 1s ease"></div>
+          </div>
+        </div>
+        <div class="status-overall-big grade-${overall.grade}">${overall.grade}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="status-mini-stat"><div style="font-size:20px;font-weight:900">${studyDays}</div><div style="font-size:10px;opacity:.6">累計学習日</div></div>
+        <div class="status-mini-stat"><div style="font-size:20px;font-weight:900">${streak}</div><div style="font-size:10px;opacity:.6">連続日数🔥</div></div>
+        <div class="status-mini-stat"><div style="font-size:20px;font-weight:900">${totalMins}</div><div style="font-size:10px;opacity:.6">累計学習(分)</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">能力ステータス</div>
+      <div>
+        ${STAT_DEFS.map(def => {
+          const st = stats[def.id];
+          const grade = getGradeInfo(st.score);
+          return `
+            <div class="stat-row">
+              <div class="stat-icon-wrap" style="background:${def.bg}">
+                <span class="material-icons" style="color:${def.color};font-size:19px">${def.icon}</span>
+              </div>
+              <div class="stat-main">
+                <div class="stat-label-row">
+                  <span class="stat-name">${def.label}</span>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <span class="status-grade-badge grade-${grade.grade}">${grade.grade}</span>
+                    <span class="stat-score-num">${st.score}</span>
+                  </div>
+                </div>
+                <div class="stat-bar-bg">
+                  <div class="stat-bar-fill" data-w="${st.score}" style="background:${grade.color}"></div>
+                </div>
+                <div class="stat-detail">${st.detail}</div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="status-next-tip">
+      <div class="status-next-label">次のアドバイス</div>
+      ${nextU ? `「${nextU.title}」（${nextU.label}）の文法を学習すると文法力が上がります。` : '文法ユニット全完了！'}
+      ${stats[weakest.id].score < 60 ? `また、<strong>${weakest.label}</strong>が一番伸びしろがあります（現在${stats[weakest.id].score}点）。` : ''}
+    </div>`;
+
+  // バーのアニメーション
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.stat-bar-fill[data-w]').forEach(bar => {
+        bar.style.width = bar.dataset.w + '%';
+      });
+    });
+  });
 }
 
 function saveSingle(field) {
