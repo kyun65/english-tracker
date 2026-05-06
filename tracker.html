@@ -1788,23 +1788,17 @@ const CURRICULUM = {
       {ja:'これはあなたの本ですか？',en:'Is this your book?'},{ja:'彼らは友達ではない。',en:'They are not friends.'},
       {ja:'今何時ですか？',en:'What time is it?'},{ja:'あなたたちは準備できていますか？',en:'Are you ready?'},
     ]},
+    { id:'g1u10', title:'複数形・冠詞 a/an/the', sub:'a book / an apple / the books', patterns:[
+      {ja:'これはりんごです。',en:'This is an apple.'},{ja:'あれは犬です。',en:'That is a dog.'},
+      {ja:'私は本を3冊持っています。',en:'I have three books.'},{ja:'机の上に本があります。',en:'There is a book on the desk.'},
+      {ja:'そのかばんを見てください。',en:'Look at the bag.'},{ja:'子供たちは公園にいます。',en:'The children are in the park.'},
+      {ja:'彼は毎朝卵を食べます。',en:'He eats an egg every morning.'},{ja:'私はその映画を見ました。',en:'I saw the movie.'},
+    ]},
     { id:'g1u3', title:'一般動詞', sub:'like / have / go / Do you...?', patterns:[
       {ja:'私は音楽が好きです。',en:'I like music.'},{ja:'彼女は英語を勉強します。',en:'She studies English.'},
       {ja:'私は毎日学校に行きます。',en:'I go to school every day.'},{ja:'彼は犬を飼っています。',en:'He has a dog.'},
       {ja:'あなたは音楽が好きですか？',en:'Do you like music?'},{ja:'彼は英語を話しますか？',en:'Does he speak English?'},
       {ja:'私はテレビを見ない。',en:"I don't watch TV."},{ja:'彼女は肉を食べません。',en:"She doesn't eat meat."},
-    ]},
-    { id:'g1u4', title:'現在進行形', sub:'I am playing...', patterns:[
-      {ja:'私は今勉強しています。',en:'I am studying now.'},{ja:'彼は音楽を聴いています。',en:'He is listening to music.'},
-      {ja:'彼女は料理をしています。',en:'She is cooking.'},{ja:'彼らはサッカーをしています。',en:'They are playing soccer.'},
-      {ja:'何をしていますか？',en:'What are you doing?'},{ja:'私は今走っていません。',en:'I am not running now.'},
-      {ja:'彼は本を読んでいますか？',en:'Is he reading a book?'},{ja:'雨が降っています。',en:'It is raining.'},
-    ]},
-    { id:'g1u5', title:'can / 命令文', sub:'I can swim. / Please sit down.', patterns:[
-      {ja:'私は泳げます。',en:'I can swim.'},{ja:'彼女はピアノが弾けます。',en:'She can play the piano.'},
-      {ja:'手伝ってもらえますか？',en:'Can you help me?'},{ja:'私は速く走れない。',en:"I can't run fast."},
-      {ja:'座ってください。',en:'Please sit down.'},{ja:'静かにしてください。',en:'Be quiet.'},
-      {ja:'走らないでください。',en:"Don't run."},{ja:'心配しないで。',en:"Don't worry."},
     ]},
     { id:'g1u6', title:'人称代名詞', sub:'I/my/me/mine・he/his/him など', patterns:[
       {ja:'これは私の本です。',en:'This is my book.'},{ja:'彼は私の友達です。',en:'He is my friend.'},
@@ -1830,6 +1824,24 @@ const CURRICULUM = {
       {ja:'あなたはいつ帰ってきましたか？',en:'When did you come back?'},{ja:'あなたはどこで彼に会いましたか？',en:'Where did you meet him?'},
       {ja:'なぜあなたは泣いているのですか？',en:'Why are you crying?'},{ja:'このケーキはいくらですか？',en:'How much is this cake?'},
     ]},
+    { id:'g1u11', title:'前置詞', sub:'in / on / at / to / from / with', patterns:[
+      {ja:'本は机の上にあります。',en:'The book is on the desk.'},{ja:'猫はベッドの下にいます。',en:'The cat is under the bed.'},
+      {ja:'私は毎朝7時に起きます。',en:'I wake up at seven every morning.'},{ja:'彼女は3月に生まれました。',en:'She was born in March.'},
+      {ja:'私は学校まで歩いて行きます。',en:'I walk to school.'},{ja:'彼は日本から来ました。',en:'He is from Japan.'},
+      {ja:'私は友達と映画を見ました。',en:'I watched a movie with my friend.'},{ja:'バス停の前で待ってください。',en:'Please wait in front of the bus stop.'},
+    ]},
+    { id:'g1u4', title:'現在進行形', sub:'I am playing...', patterns:[
+      {ja:'私は今勉強しています。',en:'I am studying now.'},{ja:'彼は音楽を聴いています。',en:'He is listening to music.'},
+      {ja:'彼女は料理をしています。',en:'She is cooking.'},{ja:'彼らはサッカーをしています。',en:'They are playing soccer.'},
+      {ja:'何をしていますか？',en:'What are you doing?'},{ja:'私は今走っていません。',en:'I am not running now.'},
+      {ja:'彼は本を読んでいますか？',en:'Is he reading a book?'},{ja:'雨が降っています。',en:'It is raining.'},
+    ]},
+    { id:'g1u5', title:'can / 命令文', sub:'I can swim. / Please sit down.', patterns:[
+      {ja:'私は泳げます。',en:'I can swim.'},{ja:'彼女はピアノが弾けます。',en:'She can play the piano.'},
+      {ja:'手伝ってもらえますか？',en:'Can you help me?'},{ja:'私は速く走れない。',en:"I can't run fast."},
+      {ja:'座ってください。',en:'Please sit down.'},{ja:'静かにしてください。',en:'Be quiet.'},
+      {ja:'走らないでください。',en:"Don't run."},{ja:'心配しないで。',en:"Don't worry."},
+    ]},
   ]},
   2: { label:'中2', units:[
     { id:'g2u1', title:'過去形', sub:'規則・不規則動詞 / Did you...?', patterns:[
@@ -1838,11 +1850,41 @@ const CURRICULUM = {
       {ja:'私は朝ごはんを食べました。',en:'I ate breakfast.'},{ja:'あなたは昨日何をしましたか？',en:'What did you do yesterday?'},
       {ja:'私は昨日学校に行きませんでした。',en:"I didn't go to school yesterday."},{ja:'あなたはいつ日本に来ましたか？',en:'When did you come to Japan?'},
     ]},
+    { id:'g2u10', title:'過去進行形', sub:'was / were + 動詞ing', patterns:[
+      {ja:'私が帰ったとき、彼は寝ていた。',en:'He was sleeping when I came home.'},{ja:'昨日の7時に彼女は勉強していた。',en:'She was studying at seven yesterday.'},
+      {ja:'彼らは公園でサッカーをしていました。',en:'They were playing soccer in the park.'},{ja:'あなたはそのとき何をしていましたか？',en:'What were you doing at that time?'},
+      {ja:'私は音楽を聴いていませんでした。',en:'I was not listening to music.'},{ja:'彼は本を読んでいましたか？',en:'Was he reading a book?'},
+      {ja:'雨が降っていたので、家にいました。',en:'I stayed home because it was raining.'},{ja:'彼女が来たとき、私は料理をしていました。',en:'I was cooking when she came.'},
+    ]},
     { id:'g2u2', title:'未来形', sub:'will / be going to', patterns:[
       {ja:'明日また来ます。',en:'I will come again tomorrow.'},{ja:'私が手伝いましょうか？',en:'Shall I help you?'},
       {ja:'私はそれをやります。',en:'I will do it.'},{ja:'彼は来ないでしょう。',en:'He will not come.'},
       {ja:'今日の午後、映画を見に行く予定です。',en:'I am going to see a movie this afternoon.'},{ja:'何をする予定ですか？',en:'What are you going to do?'},
       {ja:'彼らはパーティーを開く予定です。',en:'They are going to have a party.'},{ja:'雨が降りそうです。',en:'It is going to rain.'},
+    ]},
+    { id:'g2u6', title:'There is / are 構文', sub:'〜があります・います', patterns:[
+      {ja:'机の上に本が1冊あります。',en:'There is a book on the desk.'},{ja:'公園に子供たちがいます。',en:'There are children in the park.'},
+      {ja:'冷蔵庫にりんごが3つあります。',en:'There are three apples in the fridge.'},{ja:'テーブルの下に猫がいます。',en:'There is a cat under the table.'},
+      {ja:'この町に病院はありますか？',en:'Is there a hospital in this town?'},{ja:'ここには問題がありません。',en:'There are no problems here.'},
+      {ja:'あの部屋には誰もいませんでした。',en:'There was no one in that room.'},{ja:'昨日、公園でコンサートがありました。',en:'There was a concert in the park yesterday.'},
+    ]},
+    { id:'g2u9', title:'have to / had to', sub:'〜しなければならない（口語）', patterns:[
+      {ja:'私は宿題をしなければなりません。',en:'I have to do my homework.'},{ja:'あなたは早く起きなければなりません。',en:'You have to get up early.'},
+      {ja:'彼は病院に行かなければなりませんでした。',en:'He had to go to the hospital.'},{ja:'私たちはルールに従わなければなりません。',en:'We have to follow the rules.'},
+      {ja:'あなたはここで待たなくてもいいです。',en:"You don't have to wait here."},{ja:'彼女は昨日学校に行かなければなりませんでした。',en:'She had to go to school yesterday.'},
+      {ja:'あなたは今日残業しなければなりませんか？',en:'Do you have to work overtime today?'},{ja:'私は制服を着なければなりません。',en:'I have to wear a uniform.'},
+    ]},
+    { id:'g2u7', title:'助動詞 must / should / may', sub:'〜しなければ・〜すべき・〜かも', patterns:[
+      {ja:'あなたは今すぐ行かなければなりません。',en:'You must go now.'},{ja:'あなたはもっと練習すべきです。',en:'You should practice more.'},
+      {ja:'入ってもいいですか？',en:'May I come in?'},{ja:'ここではたばこを吸ってはいけません。',en:'You must not smoke here.'},
+      {ja:'もっと野菜を食べた方がいいよ。',en:'You should eat more vegetables.'},{ja:'明日は雨が降るかもしれません。',en:'It may rain tomorrow.'},
+      {ja:'あなたは今日勉強しなければなりません。',en:'You must study today.'},{ja:'こんな遅くに外出しない方がいい。',en:'You should not go out so late.'},
+    ]},
+    { id:'g2u8', title:'接続詞', sub:'when / if / because / that', patterns:[
+      {ja:'私が家に帰ったとき、彼女は料理していた。',en:'She was cooking when I came home.'},{ja:'もし雨が降ったら、家にいます。',en:'If it rains, I will stay home.'},
+      {ja:'私は疲れているので早く寝ます。',en:'I go to bed early because I am tired.'},{ja:'私は彼が親切だと思います。',en:'I think that he is kind.'},
+      {ja:'あなたが時間があれば、手伝ってください。',en:'Please help me if you have time.'},{ja:'私が子どもだったとき、よく泳ぎに行った。',en:'When I was a child, I often went swimming.'},
+      {ja:'彼女が来なかったのは病気だったからです。',en:'She did not come because she was sick.'},{ja:'彼は彼女が日本人だと知りませんでした。',en:"He didn't know that she was Japanese."},
     ]},
     { id:'g2u3', title:'不定詞 to', sub:'want to / like to / in order to', patterns:[
       {ja:'私は英語を勉強したい。',en:'I want to study English.'},{ja:'彼女は医者になりたい。',en:'She wants to be a doctor.'},
@@ -1861,24 +1903,6 @@ const CURRICULUM = {
       {ja:'彼女は私と同じくらい速く走れます。',en:'She can run as fast as me.'},{ja:'東京は大阪より大きい。',en:'Tokyo is bigger than Osaka.'},
       {ja:'英語は数学より簡単です。',en:'English is easier than math.'},{ja:'これが一番安い品物ですか？',en:'Is this the cheapest item?'},
       {ja:'彼女は妹より上手に歌えます。',en:'She can sing better than her sister.'},{ja:'これが今まで食べた中で一番美味しい料理です。',en:'This is the most delicious dish I have ever eaten.'},
-    ]},
-    { id:'g2u6', title:'There is / are 構文', sub:'〜があります・います', patterns:[
-      {ja:'机の上に本が1冊あります。',en:'There is a book on the desk.'},{ja:'公園に子供たちがいます。',en:'There are children in the park.'},
-      {ja:'冷蔵庫にりんごが3つあります。',en:'There are three apples in the fridge.'},{ja:'テーブルの下に猫がいます。',en:'There is a cat under the table.'},
-      {ja:'この町に病院はありますか？',en:'Is there a hospital in this town?'},{ja:'ここには問題がありません。',en:'There are no problems here.'},
-      {ja:'あの部屋には誰もいませんでした。',en:'There was no one in that room.'},{ja:'昨日、公園でコンサートがありました。',en:'There was a concert in the park yesterday.'},
-    ]},
-    { id:'g2u7', title:'助動詞 must / should / may', sub:'〜しなければ・〜すべき・〜かも', patterns:[
-      {ja:'あなたは今すぐ行かなければなりません。',en:'You must go now.'},{ja:'あなたはもっと練習すべきです。',en:'You should practice more.'},
-      {ja:'入ってもいいですか？',en:'May I come in?'},{ja:'ここではたばこを吸ってはいけません。',en:'You must not smoke here.'},
-      {ja:'もっと野菜を食べた方がいいよ。',en:'You should eat more vegetables.'},{ja:'明日は雨が降るかもしれません。',en:'It may rain tomorrow.'},
-      {ja:'あなたは今日勉強しなければなりません。',en:'You must study today.'},{ja:'こんな遅くに外出しない方がいい。',en:'You should not go out so late.'},
-    ]},
-    { id:'g2u8', title:'接続詞', sub:'when / if / because / that', patterns:[
-      {ja:'私が家に帰ったとき、彼女は料理していた。',en:'She was cooking when I came home.'},{ja:'もし雨が降ったら、家にいます。',en:'If it rains, I will stay home.'},
-      {ja:'私は疲れているので早く寝ます。',en:'I go to bed early because I am tired.'},{ja:'私は彼が親切だと思います。',en:'I think that he is kind.'},
-      {ja:'あなたが時間があれば、手伝ってください。',en:'Please help me if you have time.'},{ja:'私が子どもだったとき、よく泳ぎに行った。',en:'When I was a child, I often went swimming.'},
-      {ja:'彼女が来なかったのは病気だったからです。',en:'She did not come because she was sick.'},{ja:'彼は彼女が日本人だと知りませんでした。',en:"He didn't know that she was Japanese."},
     ]},
   ]},
   3: { label:'中3', units:[
@@ -1918,36 +1942,58 @@ const CURRICULUM = {
       {ja:'眠っている赤ちゃんを起こさないでください。',en:"Don't wake the sleeping baby."},{ja:'フランス語で書かれた本は読めません。',en:"I can't read books written in French."},
       {ja:'プールで泳いでいる男の子は田中くんです。',en:'The boy swimming in the pool is Tanaka.'},{ja:'落ちた葉っぱを集めました。',en:'I collected fallen leaves.'},
     ]},
+    { id:'g3u7', title:'付加疑問文', sub:'isn\'t it? / didn\'t you?', patterns:[
+      {ja:'今日は暑いですね？',en:"It's hot today, isn't it?"},{ja:'あなたは学生ですよね？',en:"You are a student, aren't you?"},
+      {ja:'彼は英語が話せますよね？',en:"He can speak English, can't he?"},{ja:'あなたはその映画を見ましたよね？',en:"You saw that movie, didn't you?"},
+      {ja:'彼女はここには来ないですよね？',en:"She won't come here, will she?"},{ja:'あなたは疲れていないですよね？',en:"You aren't tired, are you?"},
+      {ja:'彼らは昨日学校に来ましたよね？',en:"They came to school yesterday, didn't they?"},{ja:'これはあなたの本ではないですよね？',en:"This isn't your book, is it?"},
+    ]},
+    { id:'g3u8', title:'感嘆文', sub:'What a...! / How...!', patterns:[
+      {ja:'なんて美しい花でしょう！',en:'What a beautiful flower!'},{ja:'なんて難しい質問でしょう！',en:'What a difficult question!'},
+      {ja:'彼はなんて速く走るのでしょう！',en:'How fast he runs!'},{ja:'なんていい天気なのでしょう！',en:'What nice weather!'},
+      {ja:'なんて面白い映画でしょう！',en:'What an interesting movie!'},{ja:'彼女はなんて親切なのでしょう！',en:'How kind she is!'},
+      {ja:'あなたたちはなんてうまく歌うのでしょう！',en:'How well you sing!'},{ja:'なんてすてきなプレゼントでしょう！',en:'What a wonderful present!'},
+    ]},
+    { id:'g3u9', title:'仮定法入門', sub:'If I were... / I wish I could...', patterns:[
+      {ja:'もし私が鳥なら、空を飛べるのに。',en:'If I were a bird, I could fly.'},{ja:'もし時間があれば、行くのに。',en:'If I had time, I would go.'},
+      {ja:'もし私があなたなら、そうしないのに。',en:"If I were you, I wouldn't do that."},{ja:'彼が来てくれたら嬉しいのに。',en:'I wish he would come.'},
+      {ja:'英語が話せたらいいのに。',en:'I wish I could speak English.'},{ja:'もしお金があれば、新しい車を買うのに。',en:'If I had money, I would buy a new car.'},
+      {ja:'もし私が首相なら、この法律を変えるのに。',en:'If I were the prime minister, I would change this law.'},{ja:'もっと早く起きればよかったのに。',en:'I wish I had gotten up earlier.'},
+    ]},
   ]},
 };
 
 let learnGrade=1, learnUnit=null, learnIdx=0, learnFlipped=false, learnProgress={};
 
 const REVIEW_EVENTS = {
-  'rev_g1_a':     { id:'rev_g1_a',     title:'中1 前半まとめ',  sub:'Be動詞・一般動詞・疑問文から出題',          sourceUnits:['g1u1','g1u2','g1u3'], count:6 },
-  'rev_g1_final': { id:'rev_g1_final', title:'中1 総まとめ',    sub:'中1の全範囲から出題',                       sourceUnits:['g1u1','g1u2','g1u3','g1u4','g1u5','g1u6','g1u7','g1u8','g1u9'], count:10 },
-  'rev_g2_a':     { id:'rev_g2_a',     title:'中2 前半まとめ',  sub:'過去形・未来形・There is/are から出題',      sourceUnits:['g2u1','g2u2','g2u6'], count:6 },
-  'rev_g2_final': { id:'rev_g2_final', title:'中2 総まとめ',    sub:'中2の全範囲から出題',                       sourceUnits:['g2u1','g2u2','g2u3','g2u4','g2u5','g2u6','g2u7','g2u8'], count:10 },
-  'rev_g3_a':     { id:'rev_g3_a',     title:'中3 前半まとめ',  sub:'現在完了形・受け身・関係代名詞から出題',     sourceUnits:['g3u1','g3u2','g3u3'], count:6 },
-  'rev_g3_final': { id:'rev_g3_final', title:'中3 総まとめ',    sub:'中3の全範囲から出題',                       sourceUnits:['g3u1','g3u2','g3u3','g3u4','g3u5','g3u6'], count:10 },
+  'rev_g1_a':     { id:'rev_g1_a',     title:'中1 前半まとめ',  sub:'Be動詞・複数形・一般動詞から出題',             sourceUnits:['g1u1','g1u2','g1u10','g1u3'], count:6 },
+  'rev_g1_final': { id:'rev_g1_final', title:'中1 総まとめ',    sub:'中1の全範囲から出題',                          sourceUnits:['g1u1','g1u2','g1u3','g1u4','g1u5','g1u6','g1u7','g1u8','g1u9','g1u10','g1u11'], count:10 },
+  'rev_g2_a':     { id:'rev_g2_a',     title:'中2 前半まとめ',  sub:'過去形・過去進行形・未来形から出題',            sourceUnits:['g2u1','g2u10','g2u2','g2u6'], count:6 },
+  'rev_g2_final': { id:'rev_g2_final', title:'中2 総まとめ',    sub:'中2の全範囲から出題',                          sourceUnits:['g2u1','g2u2','g2u3','g2u4','g2u5','g2u6','g2u7','g2u8','g2u9','g2u10'], count:10 },
+  'rev_g3_a':     { id:'rev_g3_a',     title:'中3 前半まとめ',  sub:'現在完了形・受け身・関係代名詞から出題',        sourceUnits:['g3u1','g3u2','g3u3'], count:6 },
+  'rev_g3_final': { id:'rev_g3_final', title:'中3 総まとめ',    sub:'中3の全範囲から出題',                          sourceUnits:['g3u1','g3u2','g3u3','g3u4','g3u5','g3u6','g3u7','g3u8','g3u9'], count:10 },
 };
 
 const CURRICULUM_PATH = [
   {type:'unit',   id:'g1u1',        grade:1},
   {type:'unit',   id:'g1u2',        grade:1},
+  {type:'unit',   id:'g1u10',       grade:1},
   {type:'unit',   id:'g1u3',        grade:1},
   {type:'review', id:'rev_g1_a',    grade:1},
   {type:'unit',   id:'g1u6',        grade:1},
   {type:'unit',   id:'g1u7',        grade:1},
   {type:'unit',   id:'g1u8',        grade:1},
   {type:'unit',   id:'g1u9',        grade:1},
+  {type:'unit',   id:'g1u11',       grade:1},
   {type:'unit',   id:'g1u4',        grade:1},
   {type:'unit',   id:'g1u5',        grade:1},
   {type:'review', id:'rev_g1_final',grade:1},
   {type:'unit',   id:'g2u1',        grade:2},
+  {type:'unit',   id:'g2u10',       grade:2},
   {type:'unit',   id:'g2u2',        grade:2},
   {type:'unit',   id:'g2u6',        grade:2},
   {type:'review', id:'rev_g2_a',    grade:2},
+  {type:'unit',   id:'g2u9',        grade:2},
   {type:'unit',   id:'g2u7',        grade:2},
   {type:'unit',   id:'g2u8',        grade:2},
   {type:'unit',   id:'g2u3',        grade:2},
@@ -1961,6 +2007,9 @@ const CURRICULUM_PATH = [
   {type:'unit',   id:'g3u4',        grade:3},
   {type:'unit',   id:'g3u5',        grade:3},
   {type:'unit',   id:'g3u6',        grade:3},
+  {type:'unit',   id:'g3u7',        grade:3},
+  {type:'unit',   id:'g3u8',        grade:3},
+  {type:'unit',   id:'g3u9',        grade:3},
   {type:'review', id:'rev_g3_final',grade:3},
 ];
 
@@ -2193,6 +2242,69 @@ const UNIT_EXPLAIN = {
       '1語で修飾する場合は名詞の前、2語以上の場合は名詞の後に置く',
     ],
     examples: [{en:'The boy running over there is my brother.', ja:'あそこで走っている少年は私の弟です。'}, {en:'Please fix the broken window.', ja:'壊れた窓を直してください。'}],
+  },
+  g1u10: {
+    tip: '名詞の前につける a/an/the と、複数形の作り方を覚えよう。英語の文では名詞の使い方が非常に重要！',
+    points: [
+      '不定冠詞: a（子音始まり）/ an（母音 a/i/u/e/o 始まり）→「ある1つの〜」',
+      '定冠詞: the → 「その〜」（話し手・聞き手がどれか分かっているとき）',
+      '複数形: 名詞 + s/es（books / boxes）、不規則形: child→children / man→men / woman→women',
+    ],
+    examples: [{en:'This is an apple.', ja:'これはりんごです。'}, {en:'The children are happy.', ja:'その子供たちは幸せです。'}],
+  },
+  g1u11: {
+    tip: '前置詞は名詞の前に置いて、場所・時間・方向などの関係を表す言葉。よく使うものをまとめて覚えよう！',
+    points: [
+      '場所: in（〜の中）/ on（〜の上・接触）/ under（〜の下）/ near（〜の近く）/ in front of（〜の前）',
+      '時間: at（〜時・特定の時点）/ on（曜日・日付）/ in（月・年・季節）',
+      '方向・その他: to（〜へ）/ from（〜から）/ with（〜と一緒に）/ for（〜のために）/ by（〜によって）',
+    ],
+    examples: [{en:'The book is on the desk.', ja:'本は机の上にあります。'}, {en:'She was born in March.', ja:'彼女は3月に生まれました。'}],
+  },
+  g2u9: {
+    tip: 'have to は must と同じ「〜しなければならない」の意味。口語では must より have to がよく使われる！過去形は had to。',
+    points: [
+      'have to + 動詞の原形（現在）/ had to + 動詞の原形（過去）',
+      "否定形 don't have to = 〜しなくてもよい（must not「してはいけない」とは全く違う！）",
+      '疑問文: Do you have to...? / Did you have to...?',
+    ],
+    examples: [{en:'I have to do my homework.', ja:'私は宿題をしなければなりません。'}, {en:"You don't have to wait here.", ja:'あなたはここで待たなくてもいいです。'}],
+  },
+  g2u10: {
+    tip: '「〜していた」という過去のある時点で続いていた動作を表す。was/were + 動詞ing で作る！',
+    points: [
+      'was/were + 動詞ing の形（I/he/she/it → was、you/we/they → were）',
+      "疑問文: Was/Were + 主語 + 動詞ing?　否定文: was not / were not（wasn't / weren't）",
+      'when（〜したとき）と一緒によく使う: I was studying when he called.',
+    ],
+    examples: [{en:'He was sleeping when I came home.', ja:'私が帰ったとき、彼は寝ていた。'}, {en:'What were you doing at that time?', ja:'あなたはそのとき何をしていましたか？'}],
+  },
+  g3u7: {
+    tip: '文の末尾に短い疑問を足して「〜ですよね？」と確認する表現。肯定文には否定の付加疑問、否定文には肯定の付加疑問をつける！',
+    points: [
+      "肯定文 + 否定の付加疑問: It's hot, isn't it? / She can swim, can't she?",
+      "否定文 + 肯定の付加疑問: It isn't cold, is it? / You don't know, do you?",
+      '付加疑問の主語は代名詞にする（he / she / it / they / we など）',
+    ],
+    examples: [{en:"It's hot today, isn't it?", ja:'今日は暑いですね？'}, {en:"You saw that movie, didn't you?", ja:'あなたはその映画を見ましたよね？'}],
+  },
+  g3u8: {
+    tip: '「なんて〜なんだ！」という驚きや感動を表す文。What と How の2パターンを使い分けよう！',
+    points: [
+      'What + a/an + 形容詞 + 名詞（+ 主語 + 動詞）!: What a beautiful day!',
+      'What + 形容詞 + 複数/不可算名詞!: What nice weather! / What cute dogs!',
+      'How + 形容詞/副詞（+ 主語 + 動詞）!: How beautiful! / How fast he runs!',
+    ],
+    examples: [{en:'What a beautiful flower!', ja:'なんて美しい花でしょう！'}, {en:'How kind she is!', ja:'彼女はなんて親切なのでしょう！'}],
+  },
+  g3u9: {
+    tip: '現実ではないことや願望を表す仮定法。「もし〜だったら...するのに」という表現。If + 過去形、would/could + 原形が基本形！',
+    points: [
+      'If + 主語 + 動詞の過去形, 主語 + would/could + 動詞の原形',
+      'be動詞は主語に関係なく were を使う（If I were you... / If she were here...）',
+      'I wish + 主語 + could/would/過去形: 〜ならいいのに（現実には違う願望）',
+    ],
+    examples: [{en:'If I were a bird, I could fly.', ja:'もし私が鳥なら、空を飛べるのに。'}, {en:'I wish I could speak English.', ja:'英語が話せたらいいのに。'}],
   },
 };
 
