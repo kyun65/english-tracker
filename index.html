@@ -1018,6 +1018,15 @@ function calcStatusStats() {
 }
 
 // ── Event System ──
+function forceEvent() {
+  const v = getV();
+  const completedUnits = CURRICULUM_PATH.filter(item => item.type === 'unit' && learnProgress[item.id] === 'done');
+  const type = (v.length >= 4 && completedUnits.length > 0)
+    ? (Math.random() < 0.5 ? 'vocab' : 'grammar')
+    : (v.length >= 4 ? 'vocab' : 'grammar');
+  triggerEvent(type);
+}
+
 function checkEventTrigger() {
   if (_eventShownThisSession) return;
   if (Math.random() > 0.30) return;
@@ -1193,7 +1202,10 @@ function renderStatus() {
       <div class="status-next-label">次のアドバイス</div>
       ${nextU ? `「${nextU.title}」（${nextU.label}）の文法を学習すると文法力が上がります。` : '文法ユニット全完了！'}
       ${stats[weakest.id].score < 60 ? `また、<strong>${weakest.label}</strong>が一番伸びしろがあります（現在${stats[weakest.id].score}点）。` : ''}
-    </div>`;
+    </div>
+    <button onclick="forceEvent()" style="width:100%;margin-top:10px;padding:12px;background:linear-gradient(135deg,#0f2044,#312e81);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+      <span style="font-size:18px;animation:flash .5s ease infinite alternate">⚡</span> テストイベントを発動する
+    </button>`;
 
   // バーのアニメーション
   requestAnimationFrame(() => {
