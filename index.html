@@ -326,6 +326,18 @@
     .next-unit-label { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
     .next-unit-title { font-size: 15px; font-weight: 800; }
     .next-unit-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    /* Unit intro */
+    .unit-intro-tip { background: rgba(37,99,235,.06); border: 1px solid rgba(37,99,235,.15); border-radius: 12px; padding: 13px 15px; font-size: 13px; line-height: 1.7; margin-bottom: 16px; }
+    .unit-intro-section { margin-bottom: 18px; }
+    .unit-intro-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+    .unit-intro-points { display: flex; flex-direction: column; gap: 9px; }
+    .unit-intro-point { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.6; }
+    .point-badge { min-width: 20px; height: 20px; background: var(--blue); color: #fff; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; flex-shrink: 0; margin-top: 2px; }
+    .unit-intro-examples { display: flex; flex-direction: column; gap: 8px; }
+    .intro-ex { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; display: flex; align-items: center; gap: 10px; }
+    .intro-ex-text { flex: 1; }
+    .intro-ex-en { font-size: 14px; font-weight: 700; color: var(--blue); margin-bottom: 2px; }
+    .intro-ex-ja { font-size: 12px; color: var(--muted); }
     .learn-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
     .back-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer; color: var(--text); font-size: 13px; display: flex; align-items: center; gap: 4px; transition: all .2s; white-space: nowrap; }
     .back-btn:hover { border-color: var(--blue); color: var(--blue); }
@@ -1965,9 +1977,129 @@ function renderUnitList() {
 
 function setLearnGrade(g) { learnGrade=g; renderUnitList(); }
 
+const UNIT_EXPLAIN = {
+  g1u1: {
+    tip: 'Be動詞は「〜です・〜にいます」を表す動詞。主語によって am / is / are の3種類を使い分けるのがポイント！',
+    points: ['I（私）→ am を使う', 'he / she / it（3人称単数）→ is を使う', 'you / we / they（複数・あなた）→ are を使う'],
+    examples: [{en:'I am a student.', ja:'私は学生です。'}, {en:'She is a teacher.', ja:'彼女は先生です。'}, {en:'They are friends.', ja:'彼らは友達です。'}],
+  },
+  g1u2: {
+    tip: 'Be動詞の文の形を変えるだけで疑問文や否定文が作れる。語順の変化がポイント！',
+    points: ['疑問文: Be動詞を文の先頭へ移す（Are you...? / Is he...?）', '否定文: Be動詞の後に not をつける（I am not... / He is not...）', '短縮形: isn\'t（is not）/ aren\'t（are not）'],
+    examples: [{en:'Are you a student?', ja:'あなたは学生ですか？'}, {en:'I am not tired.', ja:'私は疲れていない。'}],
+  },
+  g1u3: {
+    tip: 'like・have・go など動作や状態を表す動詞。主語が3人称単数（he/she/it）なら語尾に s をつけることを忘れずに！',
+    points: ['I / you / we / they → 動詞そのまま（like / go）', 'he / she / it → 動詞 + s/es（likes / goes）', '疑問文は Do/Does を文頭に、否定文は don\'t/doesn\'t を動詞の前に置く'],
+    examples: [{en:'I like music.', ja:'私は音楽が好きです。'}, {en:'Does he speak English?', ja:'彼は英語を話しますか？'}],
+  },
+  g1u4: {
+    tip: '「今まさに〜している」という動作を表す。be動詞 + 動詞ing の形がセットで覚えよう！',
+    points: ['am / is / are + 動詞ing の形で作る', 'e で終わる動詞は e をとって ing（make→making）', '短母音＋子音で終わる動詞は子音を重ねて ing（run→running）'],
+    examples: [{en:'I am studying now.', ja:'私は今勉強しています。'}, {en:'What are you doing?', ja:'何をしていますか？'}],
+  },
+  g1u5: {
+    tip: 'can は「〜できる」を表す助動詞。命令文は動詞の原形で始めるだけでOK！',
+    points: ['can + 動詞の原形（I can swim. / She can play the piano.）', '否定形: cannot / can\'t（I can\'t run fast.）', '命令文: 動詞の原形で始める。Please をつけると丁寧に。否定は Don\'t + 動詞'],
+    examples: [{en:'I can swim.', ja:'私は泳げます。'}, {en:"Don't run.", ja:'走らないでください。'}],
+  },
+  g2u1: {
+    tip: '過去のことを伝える形。規則動詞は ed をつけるだけだが、不規則動詞は形が変わるのでまとめて覚えよう！',
+    points: ['規則動詞: 動詞 + ed（played / studied / stopped）', '不規則動詞: 形が変わる（go→went / have→had / see→saw）', '疑問文・否定文: Did を使い、動詞は原形に戻す（Did you go...? / I didn\'t go...）'],
+    examples: [{en:'I played soccer yesterday.', ja:'私は昨日サッカーをしました。'}, {en:'What did you do?', ja:'あなたは何をしましたか？'}],
+  },
+  g2u2: {
+    tip: '未来のことを表す2つの方法を使い分けよう。will はその場の意思、be going to は前から計画していたこと。',
+    points: ['will + 動詞の原形（その場の意思・予測）', 'be going to + 動詞の原形（前から決めていた計画）', '疑問文: Will you...? / Are you going to...?'],
+    examples: [{en:"I'll call her tomorrow.", ja:'明日、彼女に電話します。'}, {en:"I'm going to watch a movie.", ja:'映画を見るつもりです。'}],
+  },
+  g2u3: {
+    tip: '「to + 動詞の原形」の形。使い方によって名詞・形容詞・副詞の3つの意味を表せる！',
+    points: ['名詞用法（〜すること）: I want to play soccer.', '副詞用法（〜するために）: I study hard to pass the exam.', '形容詞用法（〜するための）: I have something to eat.'],
+    examples: [{en:'I want to play soccer.', ja:'私はサッカーがしたい。'}, {en:'She goes to the library to study.', ja:'彼女は勉強しに図書館へ行きます。'}],
+  },
+  g2u4: {
+    tip: '動詞に ing をつけて名詞として使う形。like / enjoy / finish などの後に続けるのが基本パターン！',
+    points: ['動詞ing を名詞として使う（Swimming is fun. 泳ぐことは楽しい）', 'like / enjoy / finish / stop の後は動名詞', '不定詞（to do）と動名詞（doing）で意味が変わる動詞もある（stop など）'],
+    examples: [{en:'Swimming is fun.', ja:'水泳は楽しい。'}, {en:'She loves singing.', ja:'彼女は歌うのが好きです。'}],
+  },
+  g2u5: {
+    tip: '2つ以上のものを比べる表現。比較級・最上級・as...as の3パターンを使い分けよう！',
+    points: ['比較級（〜より）: 形容詞/副詞 + er + than（taller than）', '最上級（一番〜）: the + 形容詞/副詞 + est（the tallest）', '同等比較（同じくらい〜）: as + 形容詞/副詞 + as（as tall as me）'],
+    examples: [{en:'He is taller than me.', ja:'彼は私より背が高い。'}, {en:'This is the most difficult problem.', ja:'これは最も難しい問題です。'}],
+  },
+  g3u1: {
+    tip: '「have/has + 過去分詞」の形で、過去から現在のつながりを表す。経験・継続・完了の3用法をおさえよう！',
+    points: ['経験（〜したことがある）: ever / never と一緒に使う', '継続（ずっと〜している）: for（〜間）/ since（〜から）と一緒に使う', '完了（もう〜した）: already / just / yet と一緒に使う'],
+    examples: [{en:'I have climbed Mt. Fuji.', ja:'私は富士山に登ったことがあります。'}, {en:'I have lived here for five years.', ja:'私は5年間ここに住んでいます。'}],
+  },
+  g3u2: {
+    tip: '「〜される・〜られる」という受け身の表現。be動詞 + 過去分詞 の形で作る！',
+    points: ['現在形: am/is/are + 過去分詞（This book is written in English.）', '過去形: was/were + 過去分詞（The bridge was built 100 years ago.）', '行為者を言う場合は by をつける（by him / by everyone）'],
+    examples: [{en:'This book is written in English.', ja:'この本は英語で書かれています。'}, {en:'The bridge was built 100 years ago.', ja:'その橋は100年前に建てられました。'}],
+  },
+  g3u3: {
+    tip: '名詞を後から説明するときに使う。who（人）/ which（もの）/ that（どちらも）の3種類！',
+    points: ['who: 人を説明する（I have a friend who lives in Tokyo.）', 'which: 物・動物を説明する（the book which I read）', 'that: who / which の代わりに使える。口語でよく使われる'],
+    examples: [{en:'This is the book that he wrote.', ja:'これは彼が書いた本です。'}, {en:'I have a friend who lives in Tokyo.', ja:'私には東京に住んでいる友達がいます。'}],
+  },
+  g3u4: {
+    tip: '不定詞の発展形。too...to / enough to / 疑問詞 + to の3パターンを使いこなそう！',
+    points: ['too + 形容詞/副詞 + to + 動詞: 〜すぎて...できない', '形容詞/副詞 + enough + to + 動詞: ...できるほど〜だ', '疑問詞 + to + 動詞: how to〜（〜のやり方）/ what to〜（何を〜すべきか）'],
+    examples: [{en:'He is too tired to move.', ja:'彼は疲れすぎて動けない。'}, {en:'She knows how to make a cake.', ja:'彼女はケーキの作り方を知っています。'}],
+  },
+};
+
 function startUnit(unitId, grade) {
   if(grade) learnGrade=+grade;
   learnUnit=CURRICULUM[learnGrade].units.find(u=>u.id===unitId);
+  learnIdx=0; learnFlipped=false;
+  renderUnitIntro();
+}
+
+function renderUnitIntro() {
+  const el=document.getElementById('vtab-learn-main');
+  if(!learnUnit) return;
+  const exp=UNIT_EXPLAIN[learnUnit.id];
+  const grade=CURRICULUM_PATH.find(p=>p.id===learnUnit.id);
+  const gradeLabel=grade?CURRICULUM[grade.grade].label:'';
+  el.innerHTML=`
+    <div class="learn-header">
+      <button class="back-btn" onclick="backToUnits()"><span class="material-icons" style="font-size:16px">arrow_back</span> 戻る</button>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800">${learnUnit.title}</div>
+        <div style="font-size:11px;color:var(--muted)">${gradeLabel}・${learnUnit.sub}</div>
+      </div>
+    </div>
+    ${exp ? `
+    <div class="unit-intro-tip">💡 ${exp.tip}</div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="unit-intro-section">
+        <div class="unit-intro-label">ポイント</div>
+        <div class="unit-intro-points">
+          ${exp.points.map((p,i)=>`<div class="unit-intro-point"><div class="point-badge">${i+1}</div><div>${p}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="unit-intro-section" style="margin-bottom:0">
+        <div class="unit-intro-label">例文</div>
+        <div class="unit-intro-examples">
+          ${exp.examples.map(e=>`
+            <div class="intro-ex">
+              <div class="intro-ex-text">
+                <div class="intro-ex-en">${e.en}</div>
+                <div class="intro-ex-ja">${e.ja}</div>
+              </div>
+              <button class="audio-btn" onclick="speak('${e.en.replace(/'/g,"\\'")}')"><span class="material-icons">volume_up</span></button>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+    <button class="btn btn-blue" style="width:100%;padding:14px;font-size:15px" onclick="beginUnitPractice()">
+      <span class="material-icons" style="vertical-align:middle;margin-right:4px">play_arrow</span>練習をはじめる（${learnUnit.patterns.length}問）
+    </button>`;
+}
+
+function beginUnitPractice() {
   learnIdx=0; learnFlipped=false; renderPattern();
 }
 
