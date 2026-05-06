@@ -265,6 +265,32 @@
     .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--green); color: #fff; padding: 10px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; transition: transform .3s ease; z-index: 300; }
     .toast.show { transform: translateX(-50%) translateY(0); }
 
+    /* Event modal */
+    .event-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 600; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    .event-modal { background: var(--bg2); border-radius: 20px; max-width: 360px; width: 100%; overflow: hidden; animation: eventPop .35s cubic-bezier(.34,1.56,.64,1); box-shadow: 0 24px 64px rgba(0,0,0,.4); }
+    @keyframes eventPop { from { transform: scale(.65); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .event-header { background: linear-gradient(135deg, #0f2044, #312e81); color: #fff; padding: 14px 18px 12px; }
+    .event-header-top { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+    .event-flash { font-size: 20px; animation: flash .5s ease infinite alternate; }
+    @keyframes flash { from { opacity: 1; } to { opacity: .35; } }
+    .event-header-title { font-size: 15px; font-weight: 900; letter-spacing: .3px; }
+    .event-header-sub { font-size: 11px; opacity: .6; }
+    .event-body { padding: 18px 18px 14px; }
+    .event-question { font-size: 15px; font-weight: 700; margin-bottom: 14px; line-height: 1.6; text-align: center; white-space: pre-line; }
+    .event-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .event-choice { padding: 12px 8px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg3); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; text-align: center; line-height: 1.4; }
+    .event-choice:hover:not(:disabled) { border-color: var(--blue); background: rgba(37,99,235,.06); }
+    .event-choice.correct { border-color: var(--green) !important; background: rgba(22,163,74,.1) !important; color: var(--green); }
+    .event-choice.wrong   { border-color: var(--red) !important;   background: rgba(220,38,38,.1) !important; color: var(--red); }
+    .event-choice:disabled { cursor: default; }
+    .event-stake { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 4px; }
+    .event-result-wrap { text-align: center; padding: 8px 0 4px; }
+    .event-result-icon { font-size: 48px; margin-bottom: 6px; }
+    .event-result-title { font-size: 20px; font-weight: 900; margin-bottom: 4px; }
+    .event-result-stat { font-size: 14px; font-weight: 700; padding: 6px 16px; border-radius: 20px; display: inline-block; margin-bottom: 14px; }
+    .event-result-stat.up   { background: rgba(22,163,74,.12);  color: var(--green); }
+    .event-result-stat.down { background: rgba(220,38,38,.12);  color: var(--red); }
+
     @media (max-width: 500px) {
       .stats-row { grid-template-columns: 1fr 1fr; }
       .form-grid { grid-template-columns: 1fr 1fr; }
@@ -622,6 +648,15 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="event-overlay" id="event-overlay" style="display:none">
+  <div class="event-modal">
+    <div class="event-header">
+      <div class="event-header-top"><span class="event-flash">⚡</span><span class="event-header-title" id="ev-title">イベント発生！</span></div>
+      <div class="event-header-sub" id="ev-sub"></div>
+    </div>
+    <div class="event-body" id="ev-body"></div>
+  </div>
+</div>
 
 <script>
 const GOAL_MIN = 30, GOAL_WORDS = 10;
@@ -658,9 +693,12 @@ let radioVal = true;
 let calY, calM, selDay = null;
 let session = [], sIdx = 0, sFlipped = false;
 let activeVTab = 'fc';
-let activeSection = null; // null=overview, number=selected section
+let activeSection = null;
 let listPage = 0;
 const LIST_PER = 20;
+let eventBonuses = {vocab: 0, grammar: 0};
+let _eventShownThisSession = false;
+const setEB = b => { eventBonuses = b; if(_user) db.collection('users').doc(_user.uid).collection('d').doc('eb').set({b}).catch(()=>{}); };
 
 // ── Tab switching ──
 function showTab(tab) {
@@ -752,6 +790,7 @@ function renderHome() {
   });
   prefillRecord();
   renderPlan();
+  checkEventTrigger();
 }
 
 // ── Weekly Plan ──
@@ -928,12 +967,13 @@ function calcStreak() {
 function calcStatusStats() {
   const v = getV(), s = getS(), today = todayStr();
 
-  // 語彙力: A=150単語習得+75%定着、SS=200単語+85%定着が目安
-  // mastered/200*70 + masteryRate*30
+  // 語彙力: サボるとSRS期限切れ分だけ実効値が下がる（忘却ペナルティ）
   const mastered = v.filter(w => w.mastered).length;
   const total = v.length;
-  const masteryRate = total > 0 ? mastered / total : 0;
-  const vocabScore = Math.min(100, Math.round(mastered / 200 * 70 + masteryRate * 30));
+  const overdueAndMastered = v.filter(w => w.mastered && w.srsDue && w.srsDue < today).length;
+  const effectiveMastered = Math.max(0, mastered - overdueAndMastered * 0.4);
+  const masteryRate = total > 0 ? effectiveMastered / total : 0;
+  const vocabScore = Math.min(100, Math.round(effectiveMastered / 200 * 70 + masteryRate * 30));
 
   // 継続力: A=連続60日+月25日学習、SS=連続100日+ほぼ毎日が目安
   // streak成分は最大50点(100日で到達)、月次成分は最大50点
@@ -963,13 +1003,109 @@ function calcStatusStats() {
   const avgMins30 = Math.round(last30.reduce((a, k) => a + (s[k]?.mins || 0), 0) / 30);
   const timeScore = Math.min(100, Math.round(avgMins30 / GOAL_MIN * 65));
 
+  // イベントボーナス適用（各±15点上限）
+  const eb = n => Math.min(15, Math.max(-15, n || 0));
+  const clamp = s => Math.min(100, Math.max(0, s));
+  const ebV = eb(eventBonuses.vocab), ebG = eb(eventBonuses.grammar);
+
   return {
-    vocab:       { score: vocabScore,       detail: `習得 ${mastered}単語 / 定着率 ${Math.round(masteryRate * 100)}%` },
-    consistency: { score: consistencyScore, detail: `連続 ${streak}日 ／ 直近30日 ${studyDays30}日学習` },
-    grammar:     { score: grammarScore,     detail: `${doneUnits} / ${totalUnits} ユニット完了` },
-    srs:         { score: srsScore,         detail: wordsWithSrs.length > 0 ? `期限内 ${wordsWithSrs.filter(w => w.srsDue >= today).length} / ${wordsWithSrs.length}件` : 'SRSデータなし' },
-    time:        { score: timeScore,        detail: `直近30日 平均 ${avgMins30}分／日（目標 ${GOAL_MIN}分）` },
+    vocab:       { score: clamp(vocabScore + ebV),       detail: `習得 ${mastered}単語 / 定着率 ${Math.round(masteryRate * 100)}%${overdueAndMastered > 0 ? ` （期限切れ ${overdueAndMastered}件）` : ''}${ebV !== 0 ? ` ／ イベント${ebV > 0 ? '+' : ''}${ebV}` : ''}` },
+    consistency: { score: clamp(consistencyScore),       detail: `連続 ${streak}日 ／ 直近30日 ${studyDays30}日学習` },
+    grammar:     { score: clamp(grammarScore + ebG),     detail: `${doneUnits} / ${totalUnits} ユニット完了${ebG !== 0 ? ` ／ イベント${ebG > 0 ? '+' : ''}${ebG}` : ''}` },
+    srs:         { score: clamp(srsScore),               detail: wordsWithSrs.length > 0 ? `期限内 ${wordsWithSrs.filter(w => w.srsDue >= today).length} / ${wordsWithSrs.length}件` : 'SRSデータなし' },
+    time:        { score: clamp(timeScore),              detail: `直近30日 平均 ${avgMins30}分／日（目標 ${GOAL_MIN}分）` },
   };
+}
+
+// ── Event System ──
+function checkEventTrigger() {
+  if (_eventShownThisSession) return;
+  if (Math.random() > 0.30) return;
+  const v = getV();
+  const completedUnits = CURRICULUM_PATH.filter(item => item.type === 'unit' && learnProgress[item.id] === 'done');
+  const hasVocab = v.length >= 4;
+  const hasGrammar = completedUnits.length > 0;
+  if (!hasVocab && !hasGrammar) return;
+  _eventShownThisSession = true;
+  const type = (hasVocab && hasGrammar) ? (Math.random() < 0.5 ? 'vocab' : 'grammar') : (hasVocab ? 'vocab' : 'grammar');
+  setTimeout(() => triggerEvent(type), 1200);
+}
+
+function triggerEvent(type) {
+  const q = type === 'vocab' ? generateVocabQuestion() : generateGrammarQuestion();
+  if (!q) return;
+  showEventQuestion(q);
+}
+
+function generateVocabQuestion() {
+  const v = getV().filter(w => w.en && w.ja);
+  if (v.length < 4) return null;
+  const target = v[Math.floor(Math.random() * v.length)];
+  const wrongs = v.filter(w => w.id !== target.id).sort(() => Math.random() - .5).slice(0, 3);
+  const choices = [{text: target.ja, correct: true}, ...wrongs.map(w => ({text: w.ja, correct: false}))].sort(() => Math.random() - .5);
+  return { type: 'vocab', title: '単語テスト', sub: '単語の意味を答えよう', question: `「 ${target.en} 」の意味は？`, choices, statKey: 'vocab', statLabel: '語彙力', reward: 2, penalty: 1 };
+}
+
+function generateGrammarQuestion() {
+  const completedUnits = CURRICULUM_PATH.filter(item => item.type === 'unit' && learnProgress[item.id] === 'done');
+  if (!completedUnits.length) return null;
+  const ref = completedUnits[Math.floor(Math.random() * completedUnits.length)];
+  const unit = CURRICULUM[ref.grade]?.units?.find(u => u.id === ref.id);
+  if (!unit?.patterns?.length) return null;
+  const target = unit.patterns[Math.floor(Math.random() * unit.patterns.length)];
+  const allPats = [1,2,3].flatMap(g => CURRICULUM[g].units.flatMap(u => u.patterns)).filter(p => p.en !== target.en);
+  const wrongs = allPats.sort(() => Math.random() - .5).slice(0, 3);
+  const choices = [{text: target.en, correct: true}, ...wrongs.map(p => ({text: p.en, correct: false}))].sort(() => Math.random() - .5);
+  return { type: 'grammar', title: '文法テスト', sub: `${unit.title}（${CURRICULUM[ref.grade].label}）`, question: `次の日本語の英訳は？\n「${target.ja}」`, choices, statKey: 'grammar', statLabel: '文法力', reward: 2, penalty: 1 };
+}
+
+function showEventQuestion(q) {
+  document.getElementById('ev-title').textContent = `⚡ ${q.title}発生！`;
+  document.getElementById('ev-sub').textContent = q.sub;
+  document.getElementById('ev-body').innerHTML = `
+    <div class="event-question">${q.question}</div>
+    <div class="event-choices">
+      ${q.choices.map((c, i) => `<button class="event-choice" onclick="submitEventAnswer(${c.correct},${i},this)" data-idx="${i}">${c.text}</button>`).join('')}
+    </div>
+    <div class="event-stake">正解: ${q.statLabel} <span style="color:var(--green);font-weight:800">+${q.reward}</span> ／ 不正解: <span style="color:var(--red);font-weight:800">−${q.penalty}</span></div>`;
+  document.getElementById('ev-body').dataset.q = JSON.stringify(q);
+  document.getElementById('event-overlay').style.display = 'flex';
+}
+
+function submitEventAnswer(correct, clickedIdx, btn) {
+  const overlay = document.getElementById('event-overlay');
+  const q = JSON.parse(document.getElementById('ev-body').dataset.q);
+  // Reveal all answers
+  document.querySelectorAll('.event-choice').forEach((el, i) => {
+    el.disabled = true;
+    if (JSON.parse(document.getElementById('ev-body').dataset.q).choices[i]?.correct) el.classList.add('correct');
+  });
+  if (!correct) btn.classList.add('wrong');
+
+  // Apply bonus
+  const newBonuses = {...eventBonuses};
+  if (correct) newBonuses[q.statKey] = Math.min(15, (newBonuses[q.statKey] || 0) + q.reward);
+  else         newBonuses[q.statKey] = Math.max(-15, (newBonuses[q.statKey] || 0) - q.penalty);
+  setEB(newBonuses);
+
+  // Show result after 800ms
+  setTimeout(() => {
+    const delta = correct ? `+${q.reward}` : `−${q.penalty}`;
+    const cls   = correct ? 'up' : 'down';
+    const icon  = correct ? '🎉' : '😅';
+    const msg   = correct ? '正解！' : '不正解…';
+    document.getElementById('ev-body').innerHTML = `
+      <div class="event-result-wrap">
+        <div class="event-result-icon">${icon}</div>
+        <div class="event-result-title">${msg}</div>
+        <div class="event-result-stat ${cls}">${q.statLabel} ${delta}</div>
+        <button class="btn btn-blue" style="width:100%" onclick="closeEventModal()">閉じる</button>
+      </div>`;
+  }, 850);
+}
+
+function closeEventModal() {
+  document.getElementById('event-overlay').style.display = 'none';
 }
 
 function renderStatus() {
@@ -1912,14 +2048,16 @@ auth.onAuthStateChanged(async user => {
     document.getElementById('login-overlay').style.display = 'none';
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('user-name').textContent = user.displayName || user.email;
-    const [ss, vs, ls] = await Promise.all([
+    const [ss, vs, ls, es] = await Promise.all([
       db.collection('users').doc(user.uid).collection('d').doc('s').get(),
       db.collection('users').doc(user.uid).collection('d').doc('v').get(),
-      db.collection('users').doc(user.uid).collection('d').doc('learn').get()
+      db.collection('users').doc(user.uid).collection('d').doc('learn').get(),
+      db.collection('users').doc(user.uid).collection('d').doc('eb').get()
     ]);
     _study = ss.exists ? (ss.data().r || {}) : {};
     _vocab = vs.exists ? (vs.data().l || []) : [];
     learnProgress = ls.exists ? (ls.data().p || {}) : {};
+    eventBonuses = es.exists ? (es.data().b || {vocab:0, grammar:0}) : {vocab:0, grammar:0};
     // localStorageからの移行（初回ログイン時）
     if (!ss.exists) {
       const ls = JSON.parse(localStorage.getItem('eng_study_v1') || '{}');
