@@ -1792,7 +1792,7 @@ const CURRICULUM = {
       {ja:'私は音楽が好きです。',en:'I like music.'},{ja:'彼女は英語を勉強します。',en:'She studies English.'},
       {ja:'私は毎日学校に行きます。',en:'I go to school every day.'},{ja:'彼は犬を飼っています。',en:'He has a dog.'},
       {ja:'あなたは音楽が好きですか？',en:'Do you like music?'},{ja:'彼は英語を話しますか？',en:'Does he speak English?'},
-      {ja:'私はテレビを見ない。',en:'I don\'t watch TV.'},{ja:'彼女は肉を食べません。',en:'She doesn\'t eat meat.'},
+      {ja:'私はテレビを見ない。',en:"I don't watch TV."},{ja:'彼女は肉を食べません。',en:"She doesn't eat meat."},
     ]},
     { id:'g1u4', title:'現在進行形', sub:'I am playing...', patterns:[
       {ja:'私は今勉強しています。',en:'I am studying now.'},{ja:'彼は音楽を聴いています。',en:'He is listening to music.'},
@@ -1802,9 +1802,33 @@ const CURRICULUM = {
     ]},
     { id:'g1u5', title:'can / 命令文', sub:'I can swim. / Please sit down.', patterns:[
       {ja:'私は泳げます。',en:'I can swim.'},{ja:'彼女はピアノが弾けます。',en:'She can play the piano.'},
-      {ja:'手伝ってもらえますか？',en:'Can you help me?'},{ja:'私は速く走れない。',en:'I can\'t run fast.'},
+      {ja:'手伝ってもらえますか？',en:'Can you help me?'},{ja:'私は速く走れない。',en:"I can't run fast."},
       {ja:'座ってください。',en:'Please sit down.'},{ja:'静かにしてください。',en:'Be quiet.'},
-      {ja:'走らないでください。',en:'Don\'t run.'},{ja:'心配しないで。',en:'Don\'t worry.'},
+      {ja:'走らないでください。',en:"Don't run."},{ja:'心配しないで。',en:"Don't worry."},
+    ]},
+    { id:'g1u6', title:'人称代名詞', sub:'I/my/me/mine・he/his/him など', patterns:[
+      {ja:'これは私の本です。',en:'This is my book.'},{ja:'彼は私の友達です。',en:'He is my friend.'},
+      {ja:'彼女は彼が好きです。',en:'She likes him.'},{ja:'彼は彼女に電話しました。',en:'He called her.'},
+      {ja:'これは彼女のかばんです。',en:'This is her bag.'},{ja:'私たちは彼らを知っています。',en:'We know them.'},
+      {ja:'この本は私のものです。',en:'This book is mine.'},{ja:'そのかばんは彼女のものですか？',en:'Is that bag hers?'},
+    ]},
+    { id:'g1u7', title:'指示代名詞', sub:'this / that / these / those', patterns:[
+      {ja:'これは何ですか？',en:'What is this?'},{ja:'あれは学校です。',en:'That is a school.'},
+      {ja:'これらはりんごですか？',en:'Are these apples?'},{ja:'あれらは私の本です。',en:'Those are my books.'},
+      {ja:'これはあなたの鉛筆ですか？',en:'Is this your pencil?'},{ja:'あれは古い建物です。',en:'That is an old building.'},
+      {ja:'これらの花はきれいです。',en:'These flowers are beautiful.'},{ja:'あちらにいる人は誰ですか？',en:'Who is that person?'},
+    ]},
+    { id:'g1u8', title:'疑問詞 what / who / which', sub:'何・誰・どちら を聞く', patterns:[
+      {ja:'あなたの名前は何ですか？',en:'What is your name?'},{ja:'あなたは何が好きですか？',en:'What do you like?'},
+      {ja:'あなたは今何を食べていますか？',en:'What are you eating now?'},{ja:'あなたのお父さんは何をしますか？',en:'What does your father do?'},
+      {ja:'あの人は誰ですか？',en:'Who is that person?'},{ja:'あなたはその映画が好きな人を知っていますか？',en:'Do you know who likes the movie?'},
+      {ja:'あなたはどちらが好きですか？',en:'Which do you like better?'},{ja:'どちらのかばんがあなたのですか？',en:'Which bag is yours?'},
+    ]},
+    { id:'g1u9', title:'疑問詞 when / where / why / how', sub:'いつ・どこ・なぜ・どのように', patterns:[
+      {ja:'あなたの誕生日はいつですか？',en:'When is your birthday?'},{ja:'あなたはどこに住んでいますか？',en:'Where do you live?'},
+      {ja:'なぜあなたは英語を勉強するのですか？',en:'Why do you study English?'},{ja:'あなたはどうやって学校に行きますか？',en:'How do you go to school?'},
+      {ja:'あなたはいつ帰ってきましたか？',en:'When did you come back?'},{ja:'あなたはどこで彼に会いましたか？',en:'Where did you meet him?'},
+      {ja:'なぜあなたは泣いているのですか？',en:'Why are you crying?'},{ja:'このケーキはいくらですか？',en:'How much is this cake?'},
     ]},
   ]},
   2: { label:'中2', units:[
@@ -1812,7 +1836,7 @@ const CURRICULUM = {
       {ja:'昨日勉強しました。',en:'I studied yesterday.'},{ja:'彼女は昨日料理をしました。',en:'She cooked yesterday.'},
       {ja:'私は昨日図書館に行きました。',en:'I went to the library yesterday.'},{ja:'彼は映画を見ました。',en:'He saw a movie.'},
       {ja:'私は朝ごはんを食べました。',en:'I ate breakfast.'},{ja:'あなたは昨日何をしましたか？',en:'What did you do yesterday?'},
-      {ja:'私は昨日学校に行きませんでした。',en:'I didn\'t go to school yesterday.'},{ja:'あなたはいつ日本に来ましたか？',en:'When did you come to Japan?'},
+      {ja:'私は昨日学校に行きませんでした。',en:"I didn't go to school yesterday."},{ja:'あなたはいつ日本に来ましたか？',en:'When did you come to Japan?'},
     ]},
     { id:'g2u2', title:'未来形', sub:'will / be going to', patterns:[
       {ja:'明日また来ます。',en:'I will come again tomorrow.'},{ja:'私が手伝いましょうか？',en:'Shall I help you?'},
@@ -1838,6 +1862,24 @@ const CURRICULUM = {
       {ja:'英語は数学より簡単です。',en:'English is easier than math.'},{ja:'これが一番安い品物ですか？',en:'Is this the cheapest item?'},
       {ja:'彼女は妹より上手に歌えます。',en:'She can sing better than her sister.'},{ja:'これが今まで食べた中で一番美味しい料理です。',en:'This is the most delicious dish I have ever eaten.'},
     ]},
+    { id:'g2u6', title:'There is / are 構文', sub:'〜があります・います', patterns:[
+      {ja:'机の上に本が1冊あります。',en:'There is a book on the desk.'},{ja:'公園に子供たちがいます。',en:'There are children in the park.'},
+      {ja:'冷蔵庫にりんごが3つあります。',en:'There are three apples in the fridge.'},{ja:'テーブルの下に猫がいます。',en:'There is a cat under the table.'},
+      {ja:'この町に病院はありますか？',en:'Is there a hospital in this town?'},{ja:'ここには問題がありません。',en:'There are no problems here.'},
+      {ja:'あの部屋には誰もいませんでした。',en:'There was no one in that room.'},{ja:'昨日、公園でコンサートがありました。',en:'There was a concert in the park yesterday.'},
+    ]},
+    { id:'g2u7', title:'助動詞 must / should / may', sub:'〜しなければ・〜すべき・〜かも', patterns:[
+      {ja:'あなたは今すぐ行かなければなりません。',en:'You must go now.'},{ja:'あなたはもっと練習すべきです。',en:'You should practice more.'},
+      {ja:'入ってもいいですか？',en:'May I come in?'},{ja:'ここではたばこを吸ってはいけません。',en:'You must not smoke here.'},
+      {ja:'もっと野菜を食べた方がいいよ。',en:'You should eat more vegetables.'},{ja:'明日は雨が降るかもしれません。',en:'It may rain tomorrow.'},
+      {ja:'あなたは今日勉強しなければなりません。',en:'You must study today.'},{ja:'こんな遅くに外出しない方がいい。',en:'You should not go out so late.'},
+    ]},
+    { id:'g2u8', title:'接続詞', sub:'when / if / because / that', patterns:[
+      {ja:'私が家に帰ったとき、彼女は料理していた。',en:'She was cooking when I came home.'},{ja:'もし雨が降ったら、家にいます。',en:'If it rains, I will stay home.'},
+      {ja:'私は疲れているので早く寝ます。',en:'I go to bed early because I am tired.'},{ja:'私は彼が親切だと思います。',en:'I think that he is kind.'},
+      {ja:'あなたが時間があれば、手伝ってください。',en:'Please help me if you have time.'},{ja:'私が子どもだったとき、よく泳ぎに行った。',en:'When I was a child, I often went swimming.'},
+      {ja:'彼女が来なかったのは病気だったからです。',en:'She did not come because she was sick.'},{ja:'彼は彼女が日本人だと知りませんでした。',en:"He didn't know that she was Japanese."},
+    ]},
   ]},
   3: { label:'中3', units:[
     { id:'g3u1', title:'現在完了形', sub:'経験・継続・完了', patterns:[
@@ -1860,9 +1902,21 @@ const CURRICULUM = {
     ]},
     { id:'g3u4', title:'不定詞の応用', sub:'too...to / enough to / how to', patterns:[
       {ja:'彼は疲れすぎて動けない。',en:'He is too tired to move.'},{ja:'彼女は英語を話せるほど賢い。',en:'She is smart enough to speak English.'},
-      {ja:'私はいつ出発すればよいかわかりません。',en:'I don\'t know when to leave.'},{ja:'彼に何を言えばいいか教えてください。',en:'Please tell me what to say to him.'},
+      {ja:'私はいつ出発すればよいかわかりません。',en:"I don't know when to leave."},{ja:'彼に何を言えばいいか教えてください。',en:'Please tell me what to say to him.'},
       {ja:'彼女は何を買うか決めました。',en:'She decided what to buy.'},{ja:'彼は起きるのが早すぎた。',en:'He got up too early.'},
-      {ja:'私はどこへ行けばいいかわかりません。',en:'I don\'t know where to go.'},{ja:'彼女はケーキの作り方を知っています。',en:'She knows how to make a cake.'},
+      {ja:'私はどこへ行けばいいかわかりません。',en:"I don't know where to go."},{ja:'彼女はケーキの作り方を知っています。',en:'She knows how to make a cake.'},
+    ]},
+    { id:'g3u5', title:'間接疑問文', sub:'Do you know where he lives?', patterns:[
+      {ja:'彼はどこに住んでいるか知っていますか？',en:'Do you know where he lives?'},{ja:'あの建物が何か知っていますか？',en:'Do you know what that building is?'},
+      {ja:'彼女がなぜ泣いているのかわかりません。',en:"I don't know why she is crying."},{ja:'次のバスが何時に来るか教えてください。',en:'Please tell me when the next bus comes.'},
+      {ja:'彼が誰だか知っていますか？',en:'Do you know who he is?'},{ja:'私はどこに行けばよいかわかりません。',en:"I don't know where I should go."},
+      {ja:'彼女が何を欲しがっているか知っていますか？',en:'Do you know what she wants?'},{ja:'彼がいつ来るか教えてくれますか？',en:'Can you tell me when he will come?'},
+    ]},
+    { id:'g3u6', title:'分詞の形容詞的用法', sub:'running boy / broken window', patterns:[
+      {ja:'あそこで走っている少年は私の弟です。',en:'The boy running over there is my brother.'},{ja:'英語で書かれた手紙を受け取りました。',en:'I received a letter written in English.'},
+      {ja:'向こうで歌っている女の子は誰ですか？',en:'Who is the girl singing over there?'},{ja:'壊れた窓を直してください。',en:'Please fix the broken window.'},
+      {ja:'眠っている赤ちゃんを起こさないでください。',en:"Don't wake the sleeping baby."},{ja:'フランス語で書かれた本は読めません。',en:"I can't read books written in French."},
+      {ja:'プールで泳いでいる男の子は田中くんです。',en:'The boy swimming in the pool is Tanaka.'},{ja:'落ちた葉っぱを集めました。',en:'I collected fallen leaves.'},
     ]},
   ]},
 };
@@ -1870,32 +1924,43 @@ const CURRICULUM = {
 let learnGrade=1, learnUnit=null, learnIdx=0, learnFlipped=false, learnProgress={};
 
 const REVIEW_EVENTS = {
-  'rev_g1_mid':   { id:'rev_g1_mid',   title:'中1 前半まとめ',  sub:'Be動詞・疑問文・一般動詞から出題',   sourceUnits:['g1u1','g1u2','g1u3'], count:6 },
-  'rev_g1_final': { id:'rev_g1_final', title:'中1 総まとめ',    sub:'中1の全範囲から出題',                sourceUnits:['g1u1','g1u2','g1u3','g1u4','g1u5'], count:8 },
-  'rev_g2_mid':   { id:'rev_g2_mid',   title:'中2 前半まとめ',  sub:'過去形・未来形・不定詞から出題',     sourceUnits:['g2u1','g2u2','g2u3'], count:6 },
-  'rev_g2_final': { id:'rev_g2_final', title:'中2 総まとめ',    sub:'中2の全範囲から出題',                sourceUnits:['g2u1','g2u2','g2u3','g2u4','g2u5'], count:8 },
-  'rev_g3_final': { id:'rev_g3_final', title:'中3 総まとめ',    sub:'中3の全範囲から出題',                sourceUnits:['g3u1','g3u2','g3u3','g3u4'], count:8 },
+  'rev_g1_a':     { id:'rev_g1_a',     title:'中1 前半まとめ',  sub:'Be動詞・一般動詞・疑問文から出題',          sourceUnits:['g1u1','g1u2','g1u3'], count:6 },
+  'rev_g1_final': { id:'rev_g1_final', title:'中1 総まとめ',    sub:'中1の全範囲から出題',                       sourceUnits:['g1u1','g1u2','g1u3','g1u4','g1u5','g1u6','g1u7','g1u8','g1u9'], count:10 },
+  'rev_g2_a':     { id:'rev_g2_a',     title:'中2 前半まとめ',  sub:'過去形・未来形・There is/are から出題',      sourceUnits:['g2u1','g2u2','g2u6'], count:6 },
+  'rev_g2_final': { id:'rev_g2_final', title:'中2 総まとめ',    sub:'中2の全範囲から出題',                       sourceUnits:['g2u1','g2u2','g2u3','g2u4','g2u5','g2u6','g2u7','g2u8'], count:10 },
+  'rev_g3_a':     { id:'rev_g3_a',     title:'中3 前半まとめ',  sub:'現在完了形・受け身・関係代名詞から出題',     sourceUnits:['g3u1','g3u2','g3u3'], count:6 },
+  'rev_g3_final': { id:'rev_g3_final', title:'中3 総まとめ',    sub:'中3の全範囲から出題',                       sourceUnits:['g3u1','g3u2','g3u3','g3u4','g3u5','g3u6'], count:10 },
 };
 
 const CURRICULUM_PATH = [
-  {type:'unit',   id:'g1u1',       grade:1},
-  {type:'unit',   id:'g1u2',       grade:1},
-  {type:'unit',   id:'g1u3',       grade:1},
-  {type:'review', id:'rev_g1_mid', grade:1},
-  {type:'unit',   id:'g1u4',       grade:1},
-  {type:'unit',   id:'g1u5',       grade:1},
+  {type:'unit',   id:'g1u1',        grade:1},
+  {type:'unit',   id:'g1u2',        grade:1},
+  {type:'unit',   id:'g1u3',        grade:1},
+  {type:'review', id:'rev_g1_a',    grade:1},
+  {type:'unit',   id:'g1u6',        grade:1},
+  {type:'unit',   id:'g1u7',        grade:1},
+  {type:'unit',   id:'g1u8',        grade:1},
+  {type:'unit',   id:'g1u9',        grade:1},
+  {type:'unit',   id:'g1u4',        grade:1},
+  {type:'unit',   id:'g1u5',        grade:1},
   {type:'review', id:'rev_g1_final',grade:1},
-  {type:'unit',   id:'g2u1',       grade:2},
-  {type:'unit',   id:'g2u2',       grade:2},
-  {type:'unit',   id:'g2u3',       grade:2},
-  {type:'review', id:'rev_g2_mid', grade:2},
-  {type:'unit',   id:'g2u4',       grade:2},
-  {type:'unit',   id:'g2u5',       grade:2},
+  {type:'unit',   id:'g2u1',        grade:2},
+  {type:'unit',   id:'g2u2',        grade:2},
+  {type:'unit',   id:'g2u6',        grade:2},
+  {type:'review', id:'rev_g2_a',    grade:2},
+  {type:'unit',   id:'g2u7',        grade:2},
+  {type:'unit',   id:'g2u8',        grade:2},
+  {type:'unit',   id:'g2u3',        grade:2},
+  {type:'unit',   id:'g2u4',        grade:2},
+  {type:'unit',   id:'g2u5',        grade:2},
   {type:'review', id:'rev_g2_final',grade:2},
-  {type:'unit',   id:'g3u1',       grade:3},
-  {type:'unit',   id:'g3u2',       grade:3},
-  {type:'unit',   id:'g3u3',       grade:3},
-  {type:'unit',   id:'g3u4',       grade:3},
+  {type:'unit',   id:'g3u1',        grade:3},
+  {type:'unit',   id:'g3u2',        grade:3},
+  {type:'unit',   id:'g3u3',        grade:3},
+  {type:'review', id:'rev_g3_a',    grade:3},
+  {type:'unit',   id:'g3u4',        grade:3},
+  {type:'unit',   id:'g3u5',        grade:3},
+  {type:'unit',   id:'g3u6',        grade:3},
   {type:'review', id:'rev_g3_final',grade:3},
 ];
 
@@ -2047,6 +2112,87 @@ const UNIT_EXPLAIN = {
     tip: '不定詞の発展形。too...to / enough to / 疑問詞 + to の3パターンを使いこなそう！',
     points: ['too + 形容詞/副詞 + to + 動詞: 〜すぎて...できない', '形容詞/副詞 + enough + to + 動詞: ...できるほど〜だ', '疑問詞 + to + 動詞: how to〜（〜のやり方）/ what to〜（何を〜すべきか）'],
     examples: [{en:'He is too tired to move.', ja:'彼は疲れすぎて動けない。'}, {en:'She knows how to make a cake.', ja:'彼女はケーキの作り方を知っています。'}],
+  },
+  g1u6: {
+    tip: '英語では立場によって代名詞の形が変わる。主語・所有格・目的格・所有代名詞の4形をセットで覚えよう！',
+    points: [
+      '主語形（〜は・が）: I / he / she / we / they / you / it',
+      '所有格（〜の）: my / his / her / our / their　　目的格（〜を・に）: me / him / her / us / them',
+      '所有代名詞（〜のもの）: mine / his / hers / ours / theirs',
+    ],
+    examples: [{en:'This is my book.', ja:'これは私の本です。'}, {en:'This book is mine.', ja:'この本は私のものです。'}],
+  },
+  g1u7: {
+    tip: '近くのものには this/these、遠くのものには that/those を使う。単数か複数かで形が変わるよ！',
+    points: [
+      '近くの1つ: this（これ）　複数: these（これら）',
+      '遠くの1つ: that（あれ・それ）　複数: those（あれら・それら）',
+      'What is this? → It is a ... のように答える。形容詞として名詞の前にも置ける（this bag / those books）',
+    ],
+    examples: [{en:'What is this?', ja:'これは何ですか？'}, {en:'Those are my books.', ja:'あれらは私の本です。'}],
+  },
+  g1u8: {
+    tip: '「何・誰・どちら」を聞く疑問詞。文の先頭に置いて、あとは疑問文の語順にするだけ！',
+    points: [
+      'What（何）: What is this? / What do you like? / What does he do?',
+      'Who（誰）: Who is that? / Who do you like? ※主語として使う場合は語順が変わる',
+      'Which（どちら・どれ）: Which do you want? / Which bag is yours?',
+    ],
+    examples: [{en:'What is your name?', ja:'あなたの名前は何ですか？'}, {en:'Which bag is yours?', ja:'どちらのかばんがあなたのですか？'}],
+  },
+  g1u9: {
+    tip: '「いつ・どこ・なぜ・どうやって」を聞く疑問詞。How は程度を聞くときにも使える！',
+    points: [
+      'When（いつ）・Where（どこ）: When/Where is...? / When/Where do you...?',
+      'Why（なぜ）: 答えるときは Because... を使う',
+      'How（どのように）/ How much（いくら）/ How many（いくつ）/ How old（何歳）',
+    ],
+    examples: [{en:'Where do you live?', ja:'あなたはどこに住んでいますか？'}, {en:'How much is this cake?', ja:'このケーキはいくらですか？'}],
+  },
+  g2u6: {
+    tip: '「〜があります・〜がいます」という存在を表す構文。There is（単数）/ There are（複数）を使い分けよう！',
+    points: [
+      'There is + 単数名詞 + 場所: There is a book on the desk.',
+      'There are + 複数名詞 + 場所: There are many students here.',
+      '疑問文: Is there...? / Are there...?　否定文: There is no... / There are no...',
+    ],
+    examples: [{en:'There is a book on the desk.', ja:'机の上に本が1冊あります。'}, {en:'Is there a hospital in this town?', ja:'この町に病院はありますか？'}],
+  },
+  g2u7: {
+    tip: 'must・should・may は動詞の前に置いて意味を加える助動詞。後ろの動詞は必ず原形にする！',
+    points: [
+      'must（〜しなければならない）: You must go. 否定 must not = してはいけない',
+      'should（〜すべきだ・〜した方がいい）: You should sleep early.',
+      'may（〜してもよい・〜かもしれない）: May I come in?（許可）/ It may rain.（可能性）',
+    ],
+    examples: [{en:'You must study today.', ja:'あなたは今日勉強しなければなりません。'}, {en:'May I come in?', ja:'入ってもいいですか？'}],
+  },
+  g2u8: {
+    tip: '2つの文をつなぐ接続詞。when/if は「時・条件」、because は「理由」、that は「内容」をつなぐ！',
+    points: [
+      'when（〜するとき）: She was cooking when I came home.',
+      'if（もし〜なら）・because（〜なので/だから）: If it rains... / ...because I am tired.',
+      'that（〜ということ）: I think that he is kind. / I know that she is busy.',
+    ],
+    examples: [{en:'If it rains, I will stay home.', ja:'もし雨が降ったら、家にいます。'}, {en:'I think that he is kind.', ja:'私は彼が親切だと思います。'}],
+  },
+  g3u5: {
+    tip: '疑問文を別の文の中に埋め込む形。疑問詞の後は「主語 + 動詞」の語順になるのがポイント！',
+    points: [
+      '疑問詞 + 主語 + 動詞 の語順（疑問文の語順 ≠ 間接疑問文の語順）',
+      'Do you know where he lives? ← "where does he live?" が変化した形',
+      "I don't know why she is crying. / Please tell me when he comes.",
+    ],
+    examples: [{en:'Do you know where he lives?', ja:'彼はどこに住んでいるか知っていますか？'}, {en:"I don't know why she is crying.", ja:'彼女がなぜ泣いているのかわかりません。'}],
+  },
+  g3u6: {
+    tip: '動詞の ing 形や過去分詞形を名詞を修飾する形容詞として使う。「〜している〇〇・〜された〇〇」',
+    points: [
+      '現在分詞（〜している〇〇）: the running boy / the girl singing over there',
+      '過去分詞（〜された・〜された状態の〇〇）: a broken window / a letter written in English',
+      '1語で修飾する場合は名詞の前、2語以上の場合は名詞の後に置く',
+    ],
+    examples: [{en:'The boy running over there is my brother.', ja:'あそこで走っている少年は私の弟です。'}, {en:'Please fix the broken window.', ja:'壊れた窓を直してください。'}],
   },
 };
 
