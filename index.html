@@ -728,71 +728,96 @@ function getLast14Keys() {
 
 function analyzeWeaknesses() {
   const s=getS(), v=getV(), today=todayStr();
-  const last14=getLast14Keys(), last7=last14.slice(7);
+  const last7=getLast14Keys().slice(7);
   const issues=[], goods=[];
 
   // 継続率
   const studyDays=last7.filter(k=>(s[k]?.mins||0)>0).length;
-  if(studyDays<=2) issues.push({icon:'event_busy', text:`直近7日間で学習できた日が${studyDays}日だけです。毎日少しずつ続けましょう`});
-  else if(studyDays>=5) goods.push({icon:'local_fire_department', text:`直近7日間で${studyDays}日学習できています！継続できています`});
+  if(studyDays<=2) issues.push({icon:'event_busy', text:`直近7日で学習できた日が${studyDays}日だけです。1日5分でも毎日続けましょう`});
+  else if(studyDays>=5) goods.push({icon:'local_fire_department', text:`直近7日間で${studyDays}日学習！継続できています`});
 
   // 平均学習時間
   const avgMins=Math.round(last7.reduce((a,k)=>a+(s[k]?.mins||0),0)/7);
-  if(avgMins<GOAL_MIN*0.5) issues.push({icon:'timer_off', text:`1日平均${avgMins}分と目標(${GOAL_MIN}分)を大きく下回っています`});
-  else if(avgMins>=GOAL_MIN) goods.push({icon:'timer', text:`1日平均${avgMins}分と目標を達成しています！`});
+  if(avgMins<GOAL_MIN*0.5) issues.push({icon:'timer_off', text:`1日平均${avgMins}分（目標${GOAL_MIN}分）。まず${Math.round(GOAL_MIN*0.7)}分/日を目指しましょう`});
+  else if(avgMins>=GOAL_MIN) goods.push({icon:'timer', text:`1日平均${avgMins}分と目標達成！`});
 
-  // SRS期限超過
-  const overdue=v.filter(w=>w.srsDue&&w.srsDue<today).length;
-  if(overdue>=5) issues.push({icon:'assignment_late', text:`復習期限を過ぎた単語が${overdue}件あります。優先的に復習しましょう`});
-  else if(overdue===0&&v.length>0) goods.push({icon:'assignment_turned_in', text:'復習期限超過の単語はゼロです！'});
+  // SRS期限超過（セクション別に集計）
+  const overdueWords=v.filter(w=>w.srsDue&&w.srsDue<today);
+  const overdueBySection={};
+  overdueWords.forEach(w=>{ const sec=w.section||1; (overdueBySection[sec]=overdueBySection[sec]||[]).push(w); });
+  const topOverdueSecs=Object.entries(overdueBySection).sort((a,b)=>b[1].length-a[1].length).slice(0,2);
+  if(overdueWords.length>=5){
+    const secDetail=topOverdueSecs.map(([sec,ws])=>`セクション${sec}(${ws.length}件)`).join('・');
+    issues.push({icon:'assignment_late', text:`復習期限切れが${overdueWords.length}件（${secDetail}）。今週中に解消しましょう`});
+  } else if(overdueWords.length===0&&v.length>0) {
+    goods.push({icon:'assignment_turned_in', text:'復習期限切れゼロ！SRS管理が完璧です'});
+  }
 
   // 定着率の低いセクション
   const secNums=[...new Set(v.map(w=>w.section||1))];
-  let weakSec=null, weakRate=1;
+  let weakSec=null, weakRate=1, weakSecWords=[];
   secNums.forEach(n=>{
     const sw=v.filter(w=>(w.section||1)===n);
     if(sw.length<3) return;
     const rate=sw.filter(w=>w.mastered).length/sw.length;
-    if(rate<weakRate){ weakRate=rate; weakSec=n; }
+    if(rate<weakRate){ weakRate=rate; weakSec=n; weakSecWords=sw; }
   });
-  if(weakSec!==null&&weakRate<0.3) issues.push({icon:'trending_down', text:`セクション${weakSec}の定着率が${Math.round(weakRate*100)}%と低めです。重点的に復習しましょう`});
+  if(weakSec!==null&&weakRate<0.4){
+    const notMastered=weakSecWords.filter(w=>!w.mastered);
+    const examples=notMastered.slice(0,3).map(w=>w.en).join('・');
+    issues.push({icon:'trending_down', text:`セクション${weakSec}の定着率${Math.round(weakRate*100)}%（未定着: ${examples} など${notMastered.length}単語）`});
+  }
 
   // 単語登録が少ない
-  if(v.length<10) issues.push({icon:'library_add', text:'登録単語がまだ少ないです。ユメタンに単語を追加しましょう'});
+  if(v.length<10) issues.push({icon:'library_add', text:'登録単語がまだ少ないです。各セクション10単語を目標に追加しましょう'});
 
-  // 文法の次ステップ
+  // 文法の次ステップ（残りパターン数も表示）
   const nextU=getNextUnit();
-  if(nextU) issues.push({icon:'school', text:`文法：次は「${nextU.title}」（${nextU.label}）に取り組みましょう`});
+  if(nextU){
+    const remaining=nextU.patterns ? nextU.patterns.length : nextU.count;
+    const typeLabel=nextU.isReview||nextU.type==='review' ? '復習テスト' : `${remaining}パターン`;
+    issues.push({icon:'school', text:`文法：「${nextU.title}」（${nextU.label}・${typeLabel}）が次のステップです`});
+  }
 
-  return {issues, goods, avgMins, studyDays, overdue, weakSec};
+  return {issues, goods, avgMins, studyDays, overdueWords, overdueBySection, topOverdueSecs, weakSec, weakSecWords, nextU};
 }
 
 function generateWeekPlan(analysis) {
-  const {avgMins, overdue, weakSec} = analysis;
+  const {avgMins, overdueWords, weakSec, weakSecWords, nextU} = analysis;
   const v=getV(), today=todayStr();
   const now=new Date();
   const dow=now.getDay();
   const monday=new Date(now); monday.setDate(now.getDate()-(dow===0?6:dow-1));
 
-  // 目標設定
   const targetMins = Math.min(Math.max(Math.round((avgMins||0)*1.2), GOAL_MIN, 20), 60);
-  const dueCards = v.filter(w=>!w.srsDue||w.srsDue<=today).length;
-  const dailyReview = Math.min(Math.max(Math.ceil(dueCards/7), 5), 20);
-  const dailyNew = weakSec ? 3 : 5;
 
-  // 曜日ごとのタスク生成
+  // 単語タスクの具体化
+  const hasOverdue = overdueWords.length > 0;
+  const dailyVocabCount = hasOverdue
+    ? Math.min(Math.max(Math.ceil(overdueWords.length/5), 5), 15)
+    : (weakSec ? 5 : 5);
+  const focusSec = weakSec || (overdueWords.length>0 ? (overdueWords[0].section||1) : null);
+  const vocabTask = hasOverdue
+    ? `${focusSec?`S${focusSec}中心に`:''}復習${dailyVocabCount}単語`
+    : `${focusSec?`S${focusSec}の`:''}新規${dailyVocabCount}単語`;
+
+  // 文法タスクの具体化
+  let grammarTask = null;
+  if(nextU){
+    const pats = nextU.patterns ? nextU.patterns.length : (nextU.count||6);
+    const perDay = Math.ceil(pats/3);
+    grammarTask = nextU.type==='review' ? `${nextU.title}` : `${nextU.title} ${perDay}問`;
+  }
+
   const DJ7=['月','火','水','木','金','土','日'];
   return Array.from({length:7},(_,i)=>{
     const d=new Date(monday); d.setDate(monday.getDate()+i);
     const k=d.toISOString().slice(0,10);
     const isWeekend=i>=5;
     const mins=isWeekend?Math.round(targetMins*0.7):targetMins;
-    const nextU=getNextUnit();
-    const grammarLabel=nextU?`${nextU.title}`:null;
     const tasks=[];
-    if(overdue>0) tasks.push(`復習 ${dailyReview}単語`);
-    else tasks.push(`新規 ${dailyNew}単語`);
-    if(!isWeekend&&grammarLabel) tasks.push(`文法: ${grammarLabel}`);
+    tasks.push(vocabTask);
+    if(!isWeekend && grammarTask) tasks.push(grammarTask);
     return {day:DJ7[i], date:d.getDate(), key:k, mins, tasks, isPast:k<today, isToday:k===today};
   });
 }
@@ -1260,22 +1285,65 @@ const PRONOUNS = new Set(['i','you','he','she','it','we','they','me','him','her'
 const ARTICLES = new Set(['a','an','the']);
 
 async function fetchPosAndExample(en) {
-  let posEn = '', posJa = '';
+  let posEn = '', posJa = '', apiExample = '';
   try {
     const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(en)}`);
     if (res.ok) {
       const data = await res.json();
       posEn = data[0]?.meanings?.[0]?.partOfSpeech || '';
       posJa = POS_MAP[posEn] || '';
+      // 辞書の例文を取得（短くて自然な英文を優先）
+      for (const meaning of (data[0]?.meanings || [])) {
+        for (const def of (meaning.definitions || [])) {
+          if (def.example && def.example.length <= 70) {
+            apiExample = def.example.charAt(0).toUpperCase() + def.example.slice(1);
+            if (!apiExample.endsWith('.') && !apiExample.endsWith('!') && !apiExample.endsWith('?')) apiExample += '.';
+            break;
+          }
+        }
+        if (apiExample) break;
+      }
     }
   } catch(e) {}
+
+  // 辞書例文が取れた場合はそれを使う（自然で意味に沿った文）
+  if (apiExample) return { posJa, example: apiExample };
+
+  // フォールバック：中学生レベルのテンプレート
   const w = en.toLowerCase(), an = /^[aeiou]/i.test(w) ? 'an' : 'a';
   const pick = arr => arr[Math.floor(Math.random()*arr.length)];
   const tpls = {
-    'verb':      [`I ${w} every day.`, `Let's ${w} together!`, `She likes to ${w}.`],
-    'noun':      [`I have ${an} ${w}.`, `This is ${an} ${w}.`, `I can see ${an} ${w}.`],
-    'adjective': [`It is very ${w}.`, `She looks ${w} today.`, `I feel ${w}.`],
-    'adverb':    [`He runs ${w}.`, `She speaks English ${w}.`, `Please do it ${w}.`],
+    'verb': [
+      `I ${w} every day.`,
+      `Can you ${w} with me?`,
+      `She wants to ${w} someday.`,
+      `Let's ${w} together!`,
+      `I like to ${w} after school.`,
+      `He tried to ${w}, but it was hard.`,
+    ],
+    'noun': [
+      `I have ${an} ${w}.`,
+      `This is ${an} ${w}.`,
+      `She found ${an} ${w} on the street.`,
+      `I want ${an} ${w} for my birthday.`,
+      `There is ${an} ${w} on the table.`,
+      `My friend bought ${an} ${w} yesterday.`,
+    ],
+    'adjective': [
+      `It is very ${w}.`,
+      `She looks ${w} today.`,
+      `I think this is ${w}.`,
+      `The weather was so ${w}!`,
+      `This movie is really ${w}.`,
+      `Your room looks ${w}.`,
+    ],
+    'adverb': [
+      `She speaks English ${w}.`,
+      `He runs ${w}.`,
+      `I study ${w} every night.`,
+      `Please read it ${w}.`,
+      `She always smiles ${w}.`,
+    ],
   };
   let example = '';
   if (PRONOUNS.has(w) || posEn === 'pronoun') {
