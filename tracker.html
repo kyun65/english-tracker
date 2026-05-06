@@ -194,6 +194,23 @@
     .srs-good  .srs-label { color: var(--blue); }
     .srs-easy  .srs-label { color: var(--green); }
     .skip-row { text-align: center; margin-top: 8px; }
+    /* Weekly Plan */
+    .plan-weak-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .plan-weak-item { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; padding: 8px 10px; border-radius: 8px; }
+    .plan-weak-item.warn { background: rgba(202,138,4,.08); color: var(--yellow); }
+    .plan-weak-item.ok   { background: rgba(22,163,74,.08);  color: var(--green); }
+    .plan-weak-item .material-icons { font-size: 16px !important; flex-shrink: 0; margin-top: 1px; }
+    .plan-weak-item span:last-child { color: var(--text); }
+    .plan-day-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; margin-top: 4px; }
+    .plan-day-cell { background: var(--bg3); border-radius: 10px; padding: 8px 4px; text-align: center; border: 1px solid var(--border); }
+    .plan-day-cell.plan-today { border-color: var(--blue); background: rgba(37,99,235,.05); }
+    .plan-day-cell.plan-past { opacity: .5; }
+    .plan-day-name { font-size: 10px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+    .plan-day-name.today { color: var(--blue); }
+    .plan-day-task { font-size: 9px; color: var(--text); line-height: 1.5; }
+    .plan-day-mins { font-size: 11px; font-weight: 800; color: var(--blue); margin-bottom: 2px; }
+    .plan-focus { background: linear-gradient(135deg,rgba(37,99,235,.06),rgba(124,58,237,.06)); border: 1px solid rgba(37,99,235,.15); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 13px; line-height: 1.6; }
+    .plan-focus-label { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
     /* Section */
     .section-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
     .section-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
@@ -466,6 +483,13 @@
     </div>
     <div class="week-chart" id="h-week"></div>
   </div>
+  <div class="card" id="plan-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="card-title" style="margin-bottom:0">今週のオーダーメイドプラン</div>
+      <button onclick="renderPlan()" style="background:none;border:none;color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:2px"><span class="material-icons" style="font-size:15px">refresh</span>更新</button>
+    </div>
+    <div id="plan-content"><div style="color:var(--muted);font-size:13px;padding:12px 0">読み込み中...</div></div>
+  </div>
 </div>
 
 <!-- CALENDAR -->
@@ -680,6 +704,119 @@ function renderHome() {
     el.appendChild(cell);
   });
   prefillRecord();
+  renderPlan();
+}
+
+// ── Weekly Plan ──
+function getLast14Keys() {
+  const keys=[], now=new Date();
+  for(let i=13;i>=0;i--){ const d=new Date(now); d.setDate(d.getDate()-i); keys.push(d.toISOString().slice(0,10)); }
+  return keys;
+}
+
+function analyzeWeaknesses() {
+  const s=getS(), v=getV(), today=todayStr();
+  const last14=getLast14Keys(), last7=last14.slice(7);
+  const issues=[], goods=[];
+
+  // 継続率
+  const studyDays=last7.filter(k=>(s[k]?.mins||0)>0).length;
+  if(studyDays<=2) issues.push({icon:'event_busy', text:`直近7日間で学習できた日が${studyDays}日だけです。毎日少しずつ続けましょう`});
+  else if(studyDays>=5) goods.push({icon:'local_fire_department', text:`直近7日間で${studyDays}日学習できています！継続できています`});
+
+  // 平均学習時間
+  const avgMins=Math.round(last7.reduce((a,k)=>a+(s[k]?.mins||0),0)/7);
+  if(avgMins<GOAL_MIN*0.5) issues.push({icon:'timer_off', text:`1日平均${avgMins}分と目標(${GOAL_MIN}分)を大きく下回っています`});
+  else if(avgMins>=GOAL_MIN) goods.push({icon:'timer', text:`1日平均${avgMins}分と目標を達成しています！`});
+
+  // SRS期限超過
+  const overdue=v.filter(w=>w.srsDue&&w.srsDue<today).length;
+  if(overdue>=5) issues.push({icon:'assignment_late', text:`復習期限を過ぎた単語が${overdue}件あります。優先的に復習しましょう`});
+  else if(overdue===0&&v.length>0) goods.push({icon:'assignment_turned_in', text:'復習期限超過の単語はゼロです！'});
+
+  // 定着率の低いセクション
+  const secNums=[...new Set(v.map(w=>w.section||1))];
+  let weakSec=null, weakRate=1;
+  secNums.forEach(n=>{
+    const sw=v.filter(w=>(w.section||1)===n);
+    if(sw.length<3) return;
+    const rate=sw.filter(w=>w.mastered).length/sw.length;
+    if(rate<weakRate){ weakRate=rate; weakSec=n; }
+  });
+  if(weakSec!==null&&weakRate<0.3) issues.push({icon:'trending_down', text:`セクション${weakSec}の定着率が${Math.round(weakRate*100)}%と低めです。重点的に復習しましょう`});
+
+  // 単語登録が少ない
+  if(v.length<10) issues.push({icon:'library_add', text:'登録単語がまだ少ないです。ユメタンに単語を追加しましょう'});
+
+  return {issues, goods, avgMins, studyDays, overdue, weakSec};
+}
+
+function generateWeekPlan(analysis) {
+  const {avgMins, overdue, weakSec} = analysis;
+  const v=getV(), today=todayStr();
+  const now=new Date();
+  const dow=now.getDay();
+  const monday=new Date(now); monday.setDate(now.getDate()-(dow===0?6:dow-1));
+
+  // 目標設定
+  const targetMins = Math.min(Math.max(Math.round((avgMins||0)*1.2), GOAL_MIN, 20), 60);
+  const dueCards = v.filter(w=>!w.srsDue||w.srsDue<=today).length;
+  const dailyReview = Math.min(Math.max(Math.ceil(dueCards/7), 5), 20);
+  const dailyNew = weakSec ? 3 : 5;
+
+  // 曜日ごとのタスク生成
+  const DJ7=['月','火','水','木','金','土','日'];
+  return Array.from({length:7},(_,i)=>{
+    const d=new Date(monday); d.setDate(monday.getDate()+i);
+    const k=d.toISOString().slice(0,10);
+    const isWeekend=i>=5;
+    const mins=isWeekend?Math.round(targetMins*0.7):targetMins;
+    const tasks=[];
+    if(overdue>0) tasks.push(`復習 ${dailyReview}単語`);
+    else tasks.push(`新規 ${dailyNew}単語`);
+    if(!isWeekend) tasks.push('文法1パターン');
+    return {day:DJ7[i], date:d.getDate(), key:k, mins, tasks, isPast:k<today, isToday:k===today};
+  });
+}
+
+function renderPlan() {
+  const el=document.getElementById('plan-content'); if(!el) return;
+  const v=getV();
+  if(v.length===0&&Object.keys(getS()).length===0){
+    el.innerHTML=`<div style="color:var(--muted);font-size:13px;padding:8px 0">単語を追加して学習を記録すると、プランが生成されます。</div>`;
+    return;
+  }
+  const analysis=analyzeWeaknesses();
+  const plan=generateWeekPlan(analysis);
+  const {issues,goods}=analysis;
+
+  // 重点フォーカス
+  const focus = issues.length>0
+    ? issues[0].text
+    : goods.length>0 ? '全体的に順調です！この調子で継続しましょう' : '学習データが蓄積されるほど精度が上がります';
+
+  // 週間目標
+  const totalMins=plan.reduce((a,d)=>a+d.mins,0);
+
+  el.innerHTML=`
+    <div class="plan-focus">
+      <div class="plan-focus-label">今週の重点</div>
+      ${focus}
+    </div>
+    <div class="plan-weak-list">
+      ${issues.slice(0,3).map(w=>`<div class="plan-weak-item warn"><span class="material-icons">${w.icon}</span><span>${w.text}</span></div>`).join('')}
+      ${goods.slice(0,2).map(w=>`<div class="plan-weak-item ok"><span class="material-icons">${w.icon}</span><span>${w.text}</span></div>`).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">今週の学習プラン（目標: 週${totalMins}分）</div>
+    <div class="plan-day-grid">
+      ${plan.map(d=>`
+        <div class="plan-day-cell ${d.isToday?'plan-today':d.isPast?'plan-past':''}">
+          <div class="plan-day-name ${d.isToday?'today':''}">${d.day}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">${d.date}</div>
+          <div class="plan-day-mins">${d.mins}分</div>
+          <div class="plan-day-task">${d.tasks.join('<br>')}</div>
+        </div>`).join('')}
+    </div>`;
 }
 
 function saveSingle(field) {
