@@ -928,34 +928,40 @@ function calcStreak() {
 function calcStatusStats() {
   const v = getV(), s = getS(), today = todayStr();
 
-  // 語彙力: 習得単語数ベース（200単語習得=100点）
+  // 語彙力: A=150単語習得+75%定着、SS=200単語+85%定着が目安
+  // mastered/200*70 + masteryRate*30
   const mastered = v.filter(w => w.mastered).length;
   const total = v.length;
   const masteryRate = total > 0 ? mastered / total : 0;
-  const vocabScore = Math.min(100, Math.round(mastered * 0.5 + masteryRate * 20));
+  const vocabScore = Math.min(100, Math.round(mastered / 200 * 70 + masteryRate * 30));
 
-  // 継続力: 連続日数 + 直近30日の頻度
+  // 継続力: A=連続60日+月25日学習、SS=連続100日+ほぼ毎日が目安
+  // streak成分は最大50点(100日で到達)、月次成分は最大50点
   const streak = calcStreak();
   const last30 = getRecentKeys(30);
   const studyDays30 = last30.filter(k => (s[k]?.mins || 0) > 0).length;
-  const consistencyScore = Math.min(100, Math.round(Math.min(60, streak * 1.5) + studyDays30 / 30 * 40));
+  const consistencyScore = Math.min(100, Math.round(Math.min(50, streak * 0.5) + studyDays30 / 30 * 50));
 
-  // 文法力: 完了ユニット数/全ユニット数
+  // 文法力: ユニット完了率そのまま（全完了=100点）
   const totalUnits = CURRICULUM_PATH.length;
   const doneUnits = CURRICULUM_PATH.filter(item => learnProgress[item.id] === 'done').length;
   const grammarScore = totalUnits > 0 ? Math.round(doneUnits / totalUnits * 100) : 0;
 
-  // 復習力: SRS期限内の割合
+  // 復習力: A=80単語+90%管理、SS=100単語+95%管理が目安
+  // 単語数が少ないと係数が下がる（少ない単語だけ完璧でも高得点にならない）
   const wordsWithSrs = v.filter(w => w.srsDue);
-  let srsScore = v.length > 0 ? 25 : 0;
+  let srsScore = 0;
   if (wordsWithSrs.length > 0) {
     const nonOverdue = wordsWithSrs.filter(w => w.srsDue >= today).length;
-    srsScore = Math.round(nonOverdue / wordsWithSrs.length * 100);
+    const rate = nonOverdue / wordsWithSrs.length;
+    const volumeBonus = Math.min(100, 30 + wordsWithSrs.length * 0.7);
+    srsScore = Math.min(100, Math.round(rate * volumeBonus));
   }
 
-  // 学習時間: 直近30日の平均 vs 目標
+  // 学習時間: A=目標時間ちょうど達成、SS=目標の1.4倍以上が目安
+  // 目標到達でA(65点)、大幅超過でS/SS
   const avgMins30 = Math.round(last30.reduce((a, k) => a + (s[k]?.mins || 0), 0) / 30);
-  const timeScore = Math.min(100, Math.round(avgMins30 / GOAL_MIN * 100));
+  const timeScore = Math.min(100, Math.round(avgMins30 / GOAL_MIN * 65));
 
   return {
     vocab:       { score: vocabScore,       detail: `習得 ${mastered}単語 / 定着率 ${Math.round(masteryRate * 100)}%` },
