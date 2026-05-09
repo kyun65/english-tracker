@@ -387,6 +387,16 @@
     .q-input.wrong { border-color: #ef4444; }
     /* Score badge */
     .score-badge { display: inline-block; background: rgba(37,99,235,.1); color: var(--blue); border: 1px solid rgba(37,99,235,.3); border-radius: 20px; padding: 4px 14px; font-size: 14px; font-weight: 700; margin-bottom: 16px; }
+    /* Mistake review */
+    .mistake-section { text-align: left; margin: 16px 0; }
+    .mistake-section-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+    .mistake-item { background: var(--bg2); border: 1px solid rgba(239,68,68,.25); border-left: 3px solid #ef4444; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+    .mistake-ja { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .mistake-row { font-size: 12px; margin-bottom: 2px; }
+    .mistake-user { color: #ef4444; }
+    .mistake-correct { color: var(--green); font-weight: 700; }
+    .tip-box { background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.6; }
+    .tip-box .material-icons { color: var(--yellow); font-size: 18px; flex-shrink: 0; margin-top: 1px; }
 
     /* Status page */
     .status-profile { background: linear-gradient(135deg, #0f2044 0%, #1e1060 100%); border-radius: 16px; padding: 20px; margin-bottom: 14px; color: #fff; }
@@ -2477,10 +2487,12 @@ function renderUnitIntro() {
 let learnMode = 'choice'; // 'choice' | 'input'
 let learnScore = 0;
 let learnAnswered = false;
+let learnMistakes = []; // {ja, en, userAnswer}
+let unitMistakeCounts = {};
 
 function beginUnitPractice(mode) {
   learnMode = mode;
-  learnIdx = 0; learnScore = 0; learnAnswered = false; learnFlipped = false;
+  learnIdx = 0; learnScore = 0; learnAnswered = false; learnFlipped = false; learnMistakes = [];
   renderQuestion();
 }
 
@@ -2546,6 +2558,7 @@ function answerChoice(idx, chosen, correctEn) {
   learnAnswered = true;
   const isOk = chosen === correctEn;
   if (isOk) learnScore++;
+  else { const p = learnUnit.patterns[learnIdx]; learnMistakes.push({ja: p.ja, en: correctEn, userAnswer: chosen}); }
   document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
   document.querySelectorAll('.choice-btn').forEach(b => {
     if (b.textContent.trim() === correctEn) b.classList.add('correct');
@@ -2586,6 +2599,7 @@ function submitInput(correctEn) {
   const normalize = s => s.toLowerCase().replace(/['']/g, "'").replace(/[.,!?;:'"]/g, '').replace(/\s+/g, ' ').trim();
   const isOk = normalize(userVal) === normalize(correctEn);
   if (isOk) learnScore++;
+  else { const p = learnUnit.patterns[learnIdx]; learnMistakes.push({ja: p.ja, en: correctEn, userAnswer: userVal}); }
   inp.disabled = true;
   inp.className = 'q-input ' + (isOk ? 'correct' : 'wrong');
   const fb = document.getElementById('q-fb');
@@ -2611,6 +2625,41 @@ function judgeLearn(ok) { // フラッシュカード互換（未使用）
   learnFlipped = false; renderPattern();
 }
 
+function analyzeMistakePatterns(mistakes) {
+  if (!mistakes.length) return [];
+  const tips = [];
+  const cs = mistakes.map(m => m.en.toLowerCase());
+  const ws = mistakes.map(m => (m.userAnswer || '').toLowerCase());
+
+  const count = (fn) => cs.filter((c, i) => fn(c, ws[i])).length;
+
+  if (count((c, w) => (/\bare\b/.test(c) && /\bis\b/.test(w)) || (/\bis\b/.test(c) && /\bare\b/.test(w))) >= 2)
+    tips.push('be動詞の使い分け（am / is / are）に注意しましょう。主語が複数・you なら are、単数の he/she/it なら is です');
+
+  if (count((c, w) => /\b\w+(s|es)\b/.test(c) && !/\b\w+(s|es)\b/.test(w)) >= 2)
+    tips.push('主語が he / she / it のとき、動詞の語尾に -s / -es をつけることを忘れずに（3人称単数現在）');
+
+  if (count((c, w) => /^(do|does|did|is|are|was|were|can|will)\b/i.test(c) && !/^(do|does|did|is|are|was|were|can|will)\b/i.test(w)) >= 2)
+    tips.push('疑問文では助動詞（Do / Does / Is / Are など）を文の先頭に出す語順に注意しましょう');
+
+  if (count((c, w) => /\b(not|don't|doesn't|didn't|isn't|aren't|wasn't|weren't|can't|won't)\b/.test(c) && !/\b(not|n't)\b/.test(w)) >= 2)
+    tips.push('否定文の作り方（don\'t / doesn\'t / isn\'t など）を確認しましょう');
+
+  if (count((c, w) => /\b(was|were|went|saw|had|got|came|said|made|took|gave|did)\b/.test(c) && !/\b(was|were|went|saw|had|got|came|said|made|took|gave|did)\b/.test(w)) >= 2)
+    tips.push('過去形の不規則変化（go→went / see→saw / have→had など）をまとめて覚えましょう');
+
+  if (count((c, w) => /\w+ing\b/.test(c) && !/\w+ing\b/.test(w)) >= 2)
+    tips.push('進行形は「be動詞 + 動詞ing」の形です。be動詞を忘れずにつけましょう');
+
+  return tips;
+}
+
+async function saveUnitMistakes(unitId, count) {
+  if (!_user || !count) return;
+  unitMistakeCounts[unitId] = (unitMistakeCounts[unitId] || 0) + count;
+  db.collection('users').doc(_user.uid).collection('d').doc('mistakes').set(unitMistakeCounts).catch(() => {});
+}
+
 function renderLearnDone() {
   const el=document.getElementById('vtab-learn-main');
   const isRev=learnUnit.isReview;
@@ -2620,12 +2669,34 @@ function renderLearnDone() {
   const icon=isRev?'emoji_events':'celebration';
   const iconColor=isRev?'var(--yellow)':'var(--green)';
   const total = learnUnit.patterns.length;
-  const msg=isRev?`${total}問すべて確認しました！`:`${total}問完了`;
+  const msg = isRev ? `${total}問すべて確認しました！` : `${total}問完了`;
   const scoreHtml = !isRev ? `<div class="score-badge">${total}問中 ${learnScore}問正解 (${Math.round(learnScore/total*100)}%)</div><br>` : '';
+
+  if (!isRev) saveUnitMistakes(learnUnit.id, learnMistakes.length);
+
+  const tips = !isRev ? analyzeMistakePatterns(learnMistakes) : [];
+  const tipsHtml = tips.length ? `
+    <div class="mistake-section">
+      <div class="mistake-section-title">傾向分析</div>
+      ${tips.map(t => `<div class="tip-box"><span class="material-icons">lightbulb</span><div>${t}</div></div>`).join('')}
+    </div>` : '';
+
+  const mistakesHtml = learnMistakes.length ? `
+    <div class="mistake-section">
+      <div class="mistake-section-title">間違えた問題（${learnMistakes.length}問）</div>
+      ${learnMistakes.map(m => `
+        <div class="mistake-item">
+          <div class="mistake-ja">${m.ja}</div>
+          ${m.userAnswer ? `<div class="mistake-row mistake-user">✗ ${m.userAnswer}</div>` : ''}
+          <div class="mistake-row mistake-correct">✓ ${m.en}</div>
+        </div>`).join('')}
+    </div>` : '';
+
   el.innerHTML=`<div class="learn-done">
     <span class="material-icons big-icon" style="color:${iconColor}">${icon}</span>
     <h2 style="font-size:22px;font-weight:800;margin-bottom:8px">${learnUnit.title} 完了！</h2>
-    ${scoreHtml}<p style="color:var(--muted);margin-bottom:24px">${msg}</p>
+    ${scoreHtml}<p style="color:var(--muted);margin-bottom:${learnMistakes.length?'16':'24'}px">${msg}</p>
+    ${tipsHtml}${mistakesHtml}
     <div style="display:flex;gap:12px;justify-content:center">
       ${againBtn}
       <button class="btn btn-green" onclick="backToUnits()">一覧へ戻る</button>
@@ -2640,16 +2711,18 @@ auth.onAuthStateChanged(async user => {
     document.getElementById('login-overlay').style.display = 'none';
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('user-name').textContent = user.displayName || user.email;
-    const [ss, vs, ls, es] = await Promise.all([
+    const [ss, vs, ls, es, ms] = await Promise.all([
       db.collection('users').doc(user.uid).collection('d').doc('s').get(),
       db.collection('users').doc(user.uid).collection('d').doc('v').get(),
       db.collection('users').doc(user.uid).collection('d').doc('learn').get(),
-      db.collection('users').doc(user.uid).collection('d').doc('eb').get()
+      db.collection('users').doc(user.uid).collection('d').doc('eb').get(),
+      db.collection('users').doc(user.uid).collection('d').doc('mistakes').get()
     ]);
     _study = ss.exists ? (ss.data().r || {}) : {};
     _vocab = vs.exists ? (vs.data().l || []) : [];
     learnProgress = ls.exists ? (ls.data().p || {}) : {};
     eventBonuses = es.exists ? (es.data().b || {vocab:0, grammar:0}) : {vocab:0, grammar:0};
+    unitMistakeCounts = ms.exists ? (ms.data() || {}) : {};
     // localStorageからの移行（初回ログイン時）
     if (!ss.exists) {
       const ls = JSON.parse(localStorage.getItem('eng_study_v1') || '{}');
