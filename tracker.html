@@ -1725,29 +1725,17 @@ const PRONOUNS = new Set(['i','you','he','she','it','we','they','me','him','her'
 const ARTICLES = new Set(['a','an','the']);
 
 async function fetchPosAndExample(en) {
-  let posEn = '', posJa = '', apiExample = '';
+  let posEn = '', posJa = '';
   try {
     const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(en)}`);
     if (res.ok) {
       const data = await res.json();
       posEn = data[0]?.meanings?.[0]?.partOfSpeech || '';
       posJa = POS_MAP[posEn] || '';
-      // 辞書の例文を取得（短くて自然な英文を優先）
-      for (const meaning of (data[0]?.meanings || [])) {
-        for (const def of (meaning.definitions || [])) {
-          if (def.example && def.example.length <= 70) {
-            apiExample = def.example.charAt(0).toUpperCase() + def.example.slice(1);
-            if (!apiExample.endsWith('.') && !apiExample.endsWith('!') && !apiExample.endsWith('?')) apiExample += '.';
-            break;
-          }
-        }
-        if (apiExample) break;
-      }
     }
   } catch(e) {}
 
-  // 辞書例文が取れた場合はそれを使う（自然で意味に沿った文）
-  if (apiExample) return { posJa, example: apiExample };
+  // 常に中学生向けテンプレートを使用
 
   // フォールバック：中学生レベルのテンプレート
   const w = en.toLowerCase(), an = /^[aeiou]/i.test(w) ? 'an' : 'a';
