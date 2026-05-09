@@ -448,7 +448,7 @@
   </button>
   <button class="tab-btn" data-tab="vocab" onclick="showTab('vocab')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-    ユメタン
+    英単語
   </button>
   <button class="tab-btn" data-tab="learn" onclick="showTab('learn')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 12 15 2 8.5"/><line x1="12" y1="15" x2="12" y2="22"/><polyline points="7 11.5 7 18 12 21 17 18 17 11.5"/></svg>
@@ -587,20 +587,29 @@
 <div class="tab-content" id="tab-vocab">
   <!-- Top buttons -->
   <div class="vtabs" id="vocab-top-tabs">
-    <button class="vtab-btn active" id="vtab-top-sections" onclick="showVocabView('sections')">セクション</button>
+    <button class="vtab-btn active" id="vtab-top-sections" onclick="showVocabView('sections')">単語帳</button>
     <button class="vtab-btn" id="vtab-top-add" onclick="showVocabView('add')">単語を追加</button>
   </div>
 
-  <!-- Section overview -->
+  <!-- Book overview -->
   <div id="vtab-sections">
     <div class="vocab-prog-bar" id="v-prog"></div>
     <div id="section-list-area"></div>
   </div>
 
-  <!-- Section detail -->
+  <!-- Sections within a book -->
+  <div id="vtab-book-sections" style="display:none">
+    <div class="section-detail-hd">
+      <button class="section-back-btn" onclick="backToBooks()"><span class="material-icons" style="font-size:18px">arrow_back</span>単語帳一覧</button>
+      <div class="section-detail-title" id="book-detail-title"></div>
+    </div>
+    <div id="book-sections-area"></div>
+  </div>
+
+  <!-- Section detail (flashcard / list) -->
   <div id="vtab-section-detail" style="display:none">
     <div class="section-detail-hd">
-      <button class="section-back-btn" onclick="backToSections()"><span class="material-icons" style="font-size:18px">arrow_back</span>一覧</button>
+      <button class="section-back-btn" onclick="backToBookSections()"><span class="material-icons" style="font-size:18px">arrow_back</span>セクション一覧</button>
       <div class="section-detail-title" id="section-detail-title"></div>
     </div>
     <div class="vtabs" style="margin-bottom:14px">
@@ -619,6 +628,13 @@
       <div class="add-grid">
         <div class="fg"><label>英語</label><input type="text" id="a-en" placeholder="run"></div>
         <div class="fg"><label>日本語</label><input type="text" id="a-ja" placeholder="走る"></div>
+        <div class="fg">
+          <label>単語帳</label>
+          <select id="a-book" onchange="renderSectionSelect()" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none">
+            <option value="ユメタン">ユメタン</option>
+            <option value="キクタン">キクタン</option>
+          </select>
+        </div>
         <div class="fg">
           <label>セクション</label>
           <select id="a-sec" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none"></select>
@@ -643,8 +659,8 @@
     </div>
     <div class="card" style="margin-top:0">
       <div class="card-title">CSVで一括インポート</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">形式: <code style="background:var(--bg2);padding:2px 6px;border-radius:4px;font-size:12px">英語,日本語,セクション番号,例文（任意）</code></p>
-      <div class="fg"><textarea id="csv-in" placeholder="run,走る,1&#10;happy,幸せな,2" style="min-height:120px;font-family:monospace;font-size:13px"></textarea></div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">形式: <code style="background:var(--bg2);padding:2px 6px;border-radius:4px;font-size:12px">英語,日本語,単語帳,セクション,例文（任意）</code></p>
+      <div class="fg"><textarea id="csv-in" placeholder="run,走る,ユメタン,1&#10;happy,幸せな,キクタン,2" style="min-height:120px;font-family:monospace;font-size:13px"></textarea></div>
       <button class="btn btn-gray" style="margin-top:10px;width:100%" onclick="importCSV()">インポートする</button>
     </div>
   </div>
@@ -706,6 +722,7 @@ let calY, calM, selDay = null;
 let session = [], sIdx = 0, sFlipped = false;
 let activeVTab = 'fc';
 let activeSection = null;
+let activeBook = null;
 let listPage = 0;
 const LIST_PER = 20;
 let eventBonuses = {vocab: 0, grammar: 0};
@@ -827,35 +844,35 @@ function analyzeWeaknesses() {
   if(avgMins<GOAL_MIN*0.5) issues.push({icon:'timer_off', text:`1日平均${avgMins}分（目標${GOAL_MIN}分）。まず${Math.round(GOAL_MIN*0.7)}分/日を目指しましょう`});
   else if(avgMins>=GOAL_MIN) goods.push({icon:'timer', text:`1日平均${avgMins}分と目標達成！`});
 
-  // SRS期限超過（セクション別に集計）
+  // SRS期限超過（単語帳別に集計）
   const overdueWords=v.filter(w=>w.srsDue&&w.srsDue<today);
-  const overdueBySection={};
-  overdueWords.forEach(w=>{ const sec=w.section||1; (overdueBySection[sec]=overdueBySection[sec]||[]).push(w); });
-  const topOverdueSecs=Object.entries(overdueBySection).sort((a,b)=>b[1].length-a[1].length).slice(0,2);
+  const overdueByBook={};
+  overdueWords.forEach(w=>{ const book=w.book||'ユメタン'; (overdueByBook[book]=overdueByBook[book]||[]).push(w); });
+  const topOverdueBooks=Object.entries(overdueByBook).sort((a,b)=>b[1].length-a[1].length).slice(0,2);
   if(overdueWords.length>=5){
-    const secDetail=topOverdueSecs.map(([sec,ws])=>`セクション${sec}(${ws.length}件)`).join('・');
-    issues.push({icon:'assignment_late', text:`復習期限切れが${overdueWords.length}件（${secDetail}）。今週中に解消しましょう`});
+    const bookDetail=topOverdueBooks.map(([book,ws])=>`${book}(${ws.length}件)`).join('・');
+    issues.push({icon:'assignment_late', text:`復習期限切れが${overdueWords.length}件（${bookDetail}）。今週中に解消しましょう`});
   } else if(overdueWords.length===0&&v.length>0) {
     goods.push({icon:'assignment_turned_in', text:'復習期限切れゼロ！SRS管理が完璧です'});
   }
 
-  // 定着率の低いセクション
-  const secNums=[...new Set(v.map(w=>w.section||1))];
-  let weakSec=null, weakRate=1, weakSecWords=[];
-  secNums.forEach(n=>{
-    const sw=v.filter(w=>(w.section||1)===n);
-    if(sw.length<3) return;
-    const rate=sw.filter(w=>w.mastered).length/sw.length;
-    if(rate<weakRate){ weakRate=rate; weakSec=n; weakSecWords=sw; }
+  // 定着率の低い単語帳
+  const bookNames=[...new Set(v.map(w=>w.book||'ユメタン'))];
+  let weakBook=null, weakRate=1, weakBookWords=[];
+  bookNames.forEach(book=>{
+    const bw=v.filter(w=>(w.book||'ユメタン')===book);
+    if(bw.length<3) return;
+    const rate=bw.filter(w=>w.mastered).length/bw.length;
+    if(rate<weakRate){ weakRate=rate; weakBook=book; weakBookWords=bw; }
   });
-  if(weakSec!==null&&weakRate<0.4){
-    const notMastered=weakSecWords.filter(w=>!w.mastered);
+  if(weakBook!==null&&weakRate<0.4){
+    const notMastered=weakBookWords.filter(w=>!w.mastered);
     const examples=notMastered.slice(0,3).map(w=>w.en).join('・');
-    issues.push({icon:'trending_down', text:`セクション${weakSec}の定着率${Math.round(weakRate*100)}%（未定着: ${examples} など${notMastered.length}単語）`});
+    issues.push({icon:'trending_down', text:`${weakBook}の定着率${Math.round(weakRate*100)}%（未定着: ${examples} など${notMastered.length}単語）`});
   }
 
   // 単語登録が少ない
-  if(v.length<10) issues.push({icon:'library_add', text:'登録単語がまだ少ないです。各セクション10単語を目標に追加しましょう'});
+  if(v.length<10) issues.push({icon:'library_add', text:'登録単語がまだ少ないです。各単語帳10単語を目標に追加しましょう'});
 
   // 文法の次ステップ（残りパターン数も表示）
   const nextU=getNextUnit();
@@ -865,11 +882,11 @@ function analyzeWeaknesses() {
     issues.push({icon:'school', text:`文法：「${nextU.title}」（${nextU.label}・${typeLabel}）が次のステップです`});
   }
 
-  return {issues, goods, avgMins, studyDays, overdueWords, overdueBySection, topOverdueSecs, weakSec, weakSecWords, nextU};
+  return {issues, goods, avgMins, studyDays, overdueWords, overdueByBook, topOverdueBooks, weakBook, weakBookWords, nextU};
 }
 
 function generateWeekPlan(analysis) {
-  const {avgMins, overdueWords, weakSec, weakSecWords, nextU} = analysis;
+  const {avgMins, overdueWords, weakBook, weakBookWords, nextU} = analysis;
   const v=getV(), today=todayStr();
   const now=new Date();
   const dow=now.getDay();
@@ -881,11 +898,11 @@ function generateWeekPlan(analysis) {
   const hasOverdue = overdueWords.length > 0;
   const dailyVocabCount = hasOverdue
     ? Math.min(Math.max(Math.ceil(overdueWords.length/5), 5), 15)
-    : (weakSec ? 5 : 5);
-  const focusSec = weakSec || (overdueWords.length>0 ? (overdueWords[0].section||1) : null);
+    : (weakBook ? 5 : 5);
+  const focusBook = weakBook || (overdueWords.length>0 ? (overdueWords[0].book||'ユメタン') : null);
   const vocabTask = hasOverdue
-    ? `${focusSec?`S${focusSec}中心に`:''}復習${dailyVocabCount}単語`
-    : `${focusSec?`S${focusSec}の`:''}新規${dailyVocabCount}単語`;
+    ? `${focusBook?`${focusBook}中心に`:''}復習${dailyVocabCount}単語`
+    : `${focusBook?`${focusBook}の`:''}新規${dailyVocabCount}単語`;
 
   // 文法タスクの具体化
   let grammarTask = null;
@@ -1311,7 +1328,7 @@ function selectDay(ds) {
       <h3>${label}</h3>
       <div class="detail-stats">
         <div class="detail-stat"><div class="detail-stat-val" style="color:var(--blue)">${rec.mins||0}</div><div class="detail-stat-label">学習時間（分）</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--yellow)">${rec.words||0}</div><div class="detail-stat-label">ユメタン（単語）</div></div>
+        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--yellow)">${rec.words||0}</div><div class="detail-stat-label">英単語</div></div>
         <div class="detail-stat"><div class="detail-stat-val" style="color:${rec.radio?'var(--green)':'var(--muted)'}">${rec.radio?'✓':'✗'}</div><div class="detail-stat-label">ラジオ英会話</div></div>
       </div>
       <label class="note-label">振り返りメモ</label>
@@ -1328,44 +1345,91 @@ function saveNote(ds) {
 }
 
 // ── Vocab ──
-const getSV = () => activeSection===null ? getV() : getV().filter(w=>(w.section||1)===activeSection);
+const getSV = () => {
+  let v = getV();
+  if (activeBook !== null) v = v.filter(w => (w.book || 'ユメタン') === activeBook);
+  if (activeSection !== null) v = v.filter(w => (w.section || 1) === activeSection);
+  return v;
+};
 
 function showVocabView(view) {
-  ['sections','section-detail','add'].forEach(v=>{
+  ['sections','book-sections','section-detail','add'].forEach(v=>{
     document.getElementById('vtab-'+v).style.display = v===view?'block':'none';
   });
-  document.getElementById('vtab-top-sections').classList.toggle('active', view==='sections'||view==='section-detail');
+  document.getElementById('vtab-top-sections').classList.toggle('active', view==='sections'||view==='book-sections'||view==='section-detail');
   document.getElementById('vtab-top-add').classList.toggle('active', view==='add');
-  if(view==='sections') { activeSection=null; renderSections(); renderVProg(); }
+  if(view==='sections') { activeBook=null; activeSection=null; renderBooks(); renderVProg(); }
+  if(view==='book-sections') { activeSection=null; renderBookSections(); }
   if(view==='add') { renderSectionSelect(); }
 }
 
 function renderSectionSelect() {
-  const sel = document.getElementById('a-sec'); if(!sel) return;
+  const bookSel = document.getElementById('a-book');
+  if (bookSel && activeBook) bookSel.value = activeBook;
+  const sel = document.getElementById('a-sec'); if (!sel) return;
+  const book = bookSel?.value || 'ユメタン';
   const counts = {};
-  getV().forEach(w=>{ const s=w.section||1; counts[s]=(counts[s]||0)+1; });
+  getV().filter(w => (w.book || 'ユメタン') === book).forEach(w => { const s = w.section || 1; counts[s] = (counts[s] || 0) + 1; });
   const prev = parseInt(sel.value) || activeSection || 1;
-  sel.innerHTML = Array.from({length:10},(_,i)=>i+1).map(n=>
-    `<option value="${n}">セクション ${n}${counts[n]?`（${counts[n]}単語）`:''}</option>`
+  sel.innerHTML = Array.from({length: 10}, (_, i) => i + 1).map(n =>
+    `<option value="${n}">Section ${n}${counts[n] ? `（${counts[n]}単語）` : ''}</option>`
   ).join('');
-  sel.value = (prev>=1&&prev<=10) ? prev : 1;
+  sel.value = (prev >= 1 && prev <= 10) ? prev : 1;
+}
+
+function openBook(name) {
+  activeBook = name;
+  activeSection = null;
+  session = []; sIdx = 0; sFlipped = false; listPage = 0;
+  showVocabView('book-sections');
+}
+
+function backToBooks() {
+  activeBook = null;
+  activeSection = null;
+  session = [];
+  showVocabView('sections');
+}
+
+function renderBookSections() {
+  const el = document.getElementById('book-sections-area');
+  document.getElementById('book-detail-title').textContent = activeBook;
+  const bw = getV().filter(w => (w.book || 'ユメタン') === activeBook);
+  const nums = [...new Set(bw.map(w => w.section || 1))].sort((a, b) => a - b);
+  if (!nums.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+      <span class="material-icons" style="font-size:48px;display:block;margin-bottom:12px">menu_book</span>
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">まだ単語がありません</div>
+      <button class="btn btn-blue" style="margin-top:8px" onclick="showVocabView('add')">単語を追加する</button></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="section-grid">${nums.map(n => {
+    const sw = bw.filter(w => (w.section || 1) === n);
+    const m = sw.filter(w => w.mastered).length, pct = sw.length ? m / sw.length * 100 : 0;
+    const td = sw.filter(w => !w.srsDue || w.srsDue <= todayStr()).length;
+    return `<div class="section-card" onclick="openSection(${n})">
+      <div class="section-card-num">Section ${n}</div>
+      <div class="section-card-title">${sw.length}単語</div>
+      <div class="section-card-stats">${m}/${sw.length} マスター${td ? ` · <span style="color:var(--blue);font-weight:700">${td}件 復習あり</span>` : '　'}</div>
+      <div class="section-pbar"><div class="section-pbar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function openSection(n) {
   activeSection = n;
   session = []; sIdx = 0; sFlipped = false; listPage = 0;
-  document.getElementById('section-detail-title').textContent = `セクション ${n}`;
+  document.getElementById('section-detail-title').textContent = `${activeBook || 'ユメタン'} Section ${n}`;
   showVocabView('section-detail');
   renderVProgSection();
   showVTab('fc');
-  // 追加フォームを開いたとき、このセクションをデフォルト選択にする
-  const sel = document.getElementById('a-sec'); if(sel) sel.value = n;
+  const sel = document.getElementById('a-sec'); if (sel) sel.value = n;
 }
 
-function backToSections() {
+function backToBookSections() {
   activeSection = null;
   session = [];
-  showVocabView('sections');
+  showVocabView('book-sections');
 }
 
 function showVTab(vt) {
@@ -1377,29 +1441,38 @@ function showVTab(vt) {
 }
 
 function renderVocab() {
-  if(activeSection===null) { renderVProg(); renderSections(); }
-  else { renderVProgSection(); if(activeVTab==='fc') renderFC(); if(activeVTab==='list') renderList(); }
+  if (activeSection === null && activeBook === null) { renderVProg(); renderBooks(); }
+  else if (activeSection === null) { renderBookSections(); }
+  else { renderVProgSection(); if (activeVTab === 'fc') renderFC(); if (activeVTab === 'list') renderList(); }
 }
 
-function renderSections() {
-  const v=getV(), el=document.getElementById('section-list-area');
-  const nums=[...new Set(v.map(w=>w.section||1))].sort((a,b)=>a-b);
-  if(!nums.length){
-    el.innerHTML=`<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+function renderBooks() {
+  const v = getV(), el = document.getElementById('section-list-area');
+  const BOOKS = ['ユメタン', 'キクタン'];
+  const extraBooks = [...new Set(v.map(w => w.book || 'ユメタン'))].filter(b => !BOOKS.includes(b));
+  const allBooks = [...BOOKS, ...extraBooks];
+  if (!v.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
       <span class="material-icons" style="font-size:48px;display:block;margin-bottom:12px">menu_book</span>
       <div style="font-size:15px;font-weight:700;margin-bottom:8px">まだ単語がありません</div>
-      <div style="font-size:13px;margin-bottom:20px">「単語を追加」からセクションを指定して追加してください</div>
+      <div style="font-size:13px;margin-bottom:20px">「単語を追加」から単語帳を選んで追加してください</div>
       <button class="btn btn-blue" onclick="showVocabView('add')">単語を追加する</button></div>`;
     return;
   }
-  el.innerHTML=`<div class="section-grid">${nums.map(n=>{
-    const sw=v.filter(w=>(w.section||1)===n);
-    const m=sw.filter(w=>w.mastered).length, pct=sw.length?m/sw.length*100:0;
-    const td=sw.filter(w=>!w.srsDue||w.srsDue<=todayStr()).length;
-    return `<div class="section-card" onclick="openSection(${n})">
-      <div class="section-card-num">セクション ${n}</div>
-      <div class="section-card-title">${sw.length}単語</div>
-      <div class="section-card-stats">${m}/${sw.length} マスター${td?` · <span style="color:var(--blue);font-weight:700">${td}件 復習あり</span>`:'　'}</div>
+  el.innerHTML = `<div class="section-grid">${allBooks.map(book => {
+    const bw = v.filter(w => (w.book || 'ユメタン') === book);
+    if (!bw.length) return `<div class="section-card" onclick="openBook('${book}')">
+      <div class="section-card-num">${book}</div>
+      <div class="section-card-title">0単語</div>
+      <div class="section-card-stats" style="color:var(--muted)">まだ追加されていません</div>
+      <div class="section-pbar"><div class="section-pbar-fill" style="width:0%"></div></div>
+    </div>`;
+    const m = bw.filter(w => w.mastered).length, pct = bw.length ? m / bw.length * 100 : 0;
+    const td = bw.filter(w => !w.srsDue || w.srsDue <= todayStr()).length;
+    return `<div class="section-card" onclick="openBook('${book}')">
+      <div class="section-card-num">${book}</div>
+      <div class="section-card-title">${bw.length}単語</div>
+      <div class="section-card-stats">${m}/${bw.length} マスター${td ? ` · <span style="color:var(--blue);font-weight:700">${td}件 復習あり</span>` : '　'}</div>
       <div class="section-pbar"><div class="section-pbar-fill" style="width:${pct}%"></div></div>
     </div>`;
   }).join('')}</div>`;
@@ -1411,7 +1484,7 @@ function renderVProg() {
   document.getElementById('v-prog').innerHTML=`
     <div class="vp-row"><div class="vp-title">全体の進捗</div><div class="vp-count">${m} / ${total} 単語</div></div>
     <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
-    <div style="margin-top:10px;font-size:12px;color:var(--muted)">今日のユメタン: ${td}/${GOAL_WORDS}単語 ${td>=GOAL_WORDS?'<span style="color:var(--green);font-weight:700">✓ 達成！</span>':''}</div>`;
+    <div style="margin-top:10px;font-size:12px;color:var(--muted)">今日の英単語: ${td}/${GOAL_WORDS}単語 ${td>=GOAL_WORDS?'<span style="color:var(--green);font-weight:700">✓ 達成！</span>':''}</div>`;
 }
 
 function renderVProgSection() {
@@ -1419,7 +1492,7 @@ function renderVProgSection() {
   const el=document.getElementById('v-prog-section'); if(!el) return;
   el.className='vocab-prog-bar';
   el.innerHTML=`
-    <div class="vp-row"><div class="vp-title">セクション ${activeSection} の進捗</div><div class="vp-count">${m} / ${total} 単語</div></div>
+    <div class="vp-row"><div class="vp-title">${activeBook || 'ユメタン'} Section ${activeSection} の進捗</div><div class="vp-count">${m} / ${total} 単語</div></div>
     <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>`;
 }
 
@@ -1734,6 +1807,7 @@ function posBadge(pos) {
 async function addWord() {
   const en=document.getElementById('a-en').value.trim(), ja=document.getElementById('a-ja').value.trim();
   let ex=document.getElementById('a-ex').value.trim(), pos=document.getElementById('a-pos').value;
+  const book=document.getElementById('a-book')?.value||'ユメタン';
   const sec=parseInt(document.getElementById('a-sec').value)||1;
   if(!en||!ja){showToast('英語と日本語を入力してください');return;}
   const btn=document.querySelector('[onclick="addWord()"]');
@@ -1744,10 +1818,10 @@ async function addWord() {
     if(!ex) ex=result.example;
     btn.textContent='追加する'; btn.disabled=false;
   }
-  const v=getV(); v.push({id:Date.now(),en,ja,pos,example:ex,section:sec,mastered:false,addedDate:todayStr()}); setV(v);
+  const v=getV(); v.push({id:Date.now(),en,ja,pos,example:ex,book,section:sec,mastered:false,addedDate:todayStr()}); setV(v);
   document.getElementById('a-en').value=''; document.getElementById('a-ja').value=''; document.getElementById('a-ex').value=''; document.getElementById('a-pos').value='';
-  session=[]; renderSections(); renderVProg();
-  showToast(`"${en}" をセクション${sec}に追加しました！`);
+  session=[]; renderBooks(); renderVProg();
+  showToast(`"${en}" を${book} Section ${sec}に追加しました！`);
 }
 
 function importCSV() {
@@ -1757,11 +1831,21 @@ function importCSV() {
     const parts=line.split(',');
     if(parts.length<2) return;
     const en=parts[0].trim(), ja=parts[1].trim();
-    const sec=parseInt(parts[2])||1;
-    const ex=parts[3]?parts[3].trim():'';
-    if(en&&ja){v.push({id:Date.now()+Math.random(),en,ja,section:sec,example:ex,mastered:false,addedDate:todayStr()});cnt++;}
+    let book='ユメタン', sec=1, ex='';
+    if(parts.length>=3){
+      const third=parts[2].trim();
+      if(isNaN(parseInt(third))){
+        book=third||'ユメタン';
+        sec=parseInt(parts[3])||1;
+        ex=parts[4]?parts[4].trim():'';
+      } else {
+        sec=parseInt(third)||1;
+        ex=parts[3]?parts[3].trim():'';
+      }
+    }
+    if(en&&ja){v.push({id:Date.now()+Math.random(),en,ja,book,section:sec,example:ex,mastered:false,addedDate:todayStr()});cnt++;}
   });
-  setV(v); document.getElementById('csv-in').value=''; session=[]; renderSections(); renderVProg(); showToast(`${cnt}単語をインポートしました！`);
+  setV(v); document.getElementById('csv-in').value=''; session=[]; renderBooks(); renderVProg(); showToast(`${cnt}単語をインポートしました！`);
 }
 
 function toggleM(id) {
