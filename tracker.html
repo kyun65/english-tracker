@@ -352,6 +352,41 @@
     .learn-actions { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
     .learn-done { text-align: center; padding: 40px 20px; }
     .learn-done .big-icon { font-size: 56px; color: var(--green); margin-bottom: 16px; }
+    /* Mode select */
+    .mode-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+    .mode-btn { background: var(--bg2); border: 2px solid var(--border); border-radius: 14px; padding: 18px 12px; cursor: pointer; text-align: center; transition: all .2s; }
+    .mode-btn:hover { border-color: var(--blue); }
+    .mode-btn .mode-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+    .mode-btn .mode-label { font-size: 14px; font-weight: 800; display: block; margin-bottom: 4px; }
+    .mode-btn .mode-sub { font-size: 11px; color: var(--muted); }
+    /* Progress bar */
+    .q-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .q-progress-bar { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+    .q-progress-fill { height: 100%; background: var(--blue); border-radius: 3px; transition: width .3s; }
+    .q-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    /* Question card */
+    .q-card { background: var(--bg2); border: 2px solid var(--border); border-radius: 20px; padding: 32px 24px; text-align: center; margin-bottom: 16px; }
+    .q-ja { font-size: 22px; font-weight: 700; line-height: 1.5; margin-bottom: 0; }
+    /* Choice buttons */
+    .choice-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .choice-btn { background: var(--bg2); border: 2px solid var(--border); border-radius: 12px; padding: 14px 18px; text-align: left; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s; line-height: 1.5; }
+    .choice-btn:hover:not(:disabled) { border-color: var(--blue); background: rgba(37,99,235,.04); }
+    .choice-btn.correct { border-color: var(--green); background: rgba(22,163,74,.08); color: var(--green); }
+    .choice-btn.wrong { border-color: #ef4444; background: rgba(239,68,68,.08); color: #ef4444; }
+    .choice-btn:disabled { cursor: default; opacity: .85; }
+    /* Feedback */
+    .q-feedback { border-radius: 12px; padding: 12px 16px; font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .q-feedback.ok { background: rgba(22,163,74,.1); color: var(--green); border: 1px solid rgba(22,163,74,.3); }
+    .q-feedback.ng { background: rgba(239,68,68,.08); color: #ef4444; border: 1px solid rgba(239,68,68,.25); }
+    .q-feedback .correct-ans { font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--text); }
+    /* Input question */
+    .q-input-wrap { display: flex; gap: 8px; margin-bottom: 14px; }
+    .q-input { flex: 1; background: var(--bg2); border: 2px solid var(--border); border-radius: 12px; padding: 13px 16px; font-size: 15px; color: var(--text); outline: none; transition: border-color .2s; }
+    .q-input:focus { border-color: var(--blue); }
+    .q-input.correct { border-color: var(--green); }
+    .q-input.wrong { border-color: #ef4444; }
+    /* Score badge */
+    .score-badge { display: inline-block; background: rgba(37,99,235,.1); color: var(--blue); border: 1px solid rgba(37,99,235,.3); border-radius: 20px; padding: 4px 14px; font-size: 14px; font-weight: 700; margin-bottom: 16px; }
 
     /* Status page */
     .status-profile { background: linear-gradient(135deg, #0f2044 0%, #1e1060 100%); border-radius: 16px; padding: 20px; margin-bottom: 14px; color: #fff; }
@@ -2424,13 +2459,29 @@ function renderUnitIntro() {
         </div>
       </div>
     </div>` : ''}
-    <button class="btn btn-blue" style="width:100%;padding:14px;font-size:15px" onclick="beginUnitPractice()">
-      <span class="material-icons" style="vertical-align:middle;margin-right:4px">play_arrow</span>練習をはじめる（${learnUnit.patterns.length}問）
-    </button>`;
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">練習モードを選択</div>
+    <div class="mode-btns">
+      <button class="mode-btn" onclick="beginUnitPractice('choice')">
+        <span class="mode-icon">🔤</span>
+        <span class="mode-label">4択問題</span>
+        <span class="mode-sub">${learnUnit.patterns.length}問・選んで答える</span>
+      </button>
+      <button class="mode-btn" onclick="beginUnitPractice('input')">
+        <span class="mode-icon">⌨️</span>
+        <span class="mode-label">入力問題</span>
+        <span class="mode-sub">${learnUnit.patterns.length}問・打ち込んで答える</span>
+      </button>
+    </div>`;
 }
 
-function beginUnitPractice() {
-  learnIdx=0; learnFlipped=false; renderPattern();
+let learnMode = 'choice'; // 'choice' | 'input'
+let learnScore = 0;
+let learnAnswered = false;
+
+function beginUnitPractice(mode) {
+  learnMode = mode;
+  learnIdx = 0; learnScore = 0; learnAnswered = false; learnFlipped = false;
+  renderQuestion();
 }
 
 function startReview(id) {
@@ -2446,53 +2497,118 @@ function startReview(id) {
 
 function backToUnits() { learnUnit=null; renderLearn(); }
 
-function renderPattern() {
-  const el=document.getElementById('vtab-learn-main');
-  if(!learnUnit) return;
-  if(learnIdx>=learnUnit.patterns.length) { renderLearnDone(); return; }
-  const p=learnUnit.patterns[learnIdx];
-  const enEsc=p.en.replace(/'/g,"\\'");
-  el.innerHTML=`
+function renderPattern() { renderQuestion(); } // backward compat
+
+function makeHeader(subtitle) {
+  const total = learnUnit.patterns.length;
+  const pct = total ? learnIdx / total * 100 : 0;
+  return `
     <div class="learn-header">
       <button class="back-btn" onclick="backToUnits()"><span class="material-icons" style="font-size:16px">arrow_back</span> 戻る</button>
-      <div style="flex:1"><div style="font-size:15px;font-weight:800">${learnUnit.title}</div><div style="font-size:11px;color:var(--muted)">${learnIdx+1} / ${learnUnit.patterns.length}パターン</div></div>
+      <div style="flex:1"><div style="font-size:15px;font-weight:800">${learnUnit.title}</div></div>
     </div>
-    <div class="pattern-card ${learnFlipped?'flipped':''}" onclick="flipLearnCard()" id="learn-card">
-      <div class="pattern-ja">${p.ja}</div>
-      <div class="pattern-hint">タップして英語を確認</div>
-      <div class="pattern-en" style="display:${learnFlipped?'block':'none'}">${p.en}</div>
-      <div class="audio-row" style="display:${learnFlipped?'flex':'none'};margin-top:12px">
-        <button class="audio-btn" onclick="event.stopPropagation();speak('${enEsc}')"><span class="material-icons">volume_up</span></button>
-      </div>
-    </div>
-    <div style="display:${learnFlipped?'block':'none'}" id="learn-acts">
-      <div class="learn-actions">
-        <button class="judge-btn judge-no" onclick="judgeLearn(false)">↩ もう一度</button>
-        <div></div>
-        <button class="judge-btn judge-yes" onclick="judgeLearn(true)">できた ✓</button>
-      </div>
+    <div class="q-progress">
+      <div class="q-progress-bar"><div class="q-progress-fill" style="width:${pct}%"></div></div>
+      <div class="q-count">${learnIdx + 1} / ${total}</div>
     </div>`;
-  if(learnFlipped) speak(p.en);
 }
 
-function flipLearnCard() {
-  if(learnFlipped) return;
-  learnFlipped=true;
-  const p=learnUnit.patterns[learnIdx];
-  document.getElementById('learn-card').classList.add('flipped');
-  document.querySelector('#learn-card .pattern-hint').style.display='none';
-  document.querySelector('#learn-card .pattern-en').style.display='block';
-  document.querySelector('#learn-card .audio-row').style.display='flex';
-  setTimeout(()=>{ const a=document.getElementById('learn-acts'); if(a) a.style.display='block'; },200);
-  speak(p.en);
+function generateChoices(correctEn) {
+  const others = learnUnit.patterns.filter(p => p.en !== correctEn)
+    .sort(() => Math.random() - .5).slice(0, 3).map(p => p.en);
+  return [...others, correctEn].sort(() => Math.random() - .5);
 }
 
-function judgeLearn(ok) {
-  if(ok) {
-    learnIdx++;
-    if(learnIdx>=learnUnit.patterns.length) { learnProgress[learnUnit.id]='done'; saveLearnProgress(); renderLearnDone(); return; }
+function renderQuestion() {
+  if (!learnUnit) return;
+  if (learnIdx >= learnUnit.patterns.length) { renderLearnDone(); return; }
+  learnAnswered = false;
+  if (learnMode === 'input') renderInputQuestion();
+  else renderChoiceQuestion();
+}
+
+function renderChoiceQuestion() {
+  const el = document.getElementById('vtab-learn-main');
+  const p = learnUnit.patterns[learnIdx];
+  const choices = generateChoices(p.en);
+  const enEsc = p.en.replace(/'/g, "\\'");
+  el.innerHTML = makeHeader() + `
+    <div class="q-card"><div class="q-ja">${p.ja}</div></div>
+    <div class="choice-list">
+      ${choices.map((c, i) => `<button class="choice-btn" id="cb${i}" onclick="answerChoice(${i},'${c.replace(/'/g,"\\'")}','${enEsc}')">${c}</button>`).join('')}
+    </div>
+    <div id="q-fb" style="display:none"></div>
+    <button id="q-next" class="btn btn-blue" style="width:100%;display:none" onclick="nextQuestion()">次の問題 →</button>`;
+}
+
+function answerChoice(idx, chosen, correctEn) {
+  if (learnAnswered) return;
+  learnAnswered = true;
+  const isOk = chosen === correctEn;
+  if (isOk) learnScore++;
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    if (b.textContent.trim() === correctEn) b.classList.add('correct');
+  });
+  if (!isOk) document.getElementById('cb' + idx).classList.add('wrong');
+  const fb = document.getElementById('q-fb');
+  fb.style.display = 'flex';
+  fb.className = 'q-feedback ' + (isOk ? 'ok' : 'ng');
+  fb.innerHTML = isOk
+    ? '<span class="material-icons">check_circle</span> 正解！'
+    : `<div><span style="display:flex;align-items:center;gap:6px"><span class="material-icons">cancel</span>不正解</span><div class="correct-ans">正解: ${correctEn}</div></div>`;
+  speak(correctEn);
+  document.getElementById('q-next').style.display = 'block';
+}
+
+function renderInputQuestion() {
+  const el = document.getElementById('vtab-learn-main');
+  const p = learnUnit.patterns[learnIdx];
+  el.innerHTML = makeHeader() + `
+    <div class="q-card"><div class="q-ja">${p.ja}</div></div>
+    <div class="q-input-wrap">
+      <input class="q-input" id="q-inp" type="text" placeholder="英語で入力してください" autocomplete="off" autocorrect="off" spellcheck="false"
+        onkeydown="if(event.key==='Enter')submitInput('${p.en.replace(/'/g,"\\'")}')">
+      <button class="btn btn-blue" onclick="submitInput('${p.en.replace(/'/g,"\\'")}')">確認</button>
+    </div>
+    <div id="q-fb" style="display:none"></div>
+    <button id="q-next" class="btn btn-blue" style="width:100%;display:none" onclick="nextQuestion()">次の問題 →</button>`;
+  setTimeout(() => document.getElementById('q-inp')?.focus(), 100);
+}
+
+function submitInput(correctEn) {
+  if (learnAnswered) return;
+  const inp = document.getElementById('q-inp');
+  if (!inp) return;
+  const userVal = inp.value.trim();
+  if (!userVal) return;
+  learnAnswered = true;
+  const normalize = s => s.toLowerCase().replace(/['']/g, "'").replace(/\s+/g, ' ').trim();
+  const isOk = normalize(userVal) === normalize(correctEn);
+  if (isOk) learnScore++;
+  inp.disabled = true;
+  inp.className = 'q-input ' + (isOk ? 'correct' : 'wrong');
+  const fb = document.getElementById('q-fb');
+  fb.style.display = 'flex';
+  fb.className = 'q-feedback ' + (isOk ? 'ok' : 'ng');
+  fb.innerHTML = isOk
+    ? '<span class="material-icons">check_circle</span> 正解！'
+    : `<div><span style="display:flex;align-items:center;gap:6px"><span class="material-icons">cancel</span>不正解</span><div class="correct-ans">正解: ${correctEn}</div></div>`;
+  speak(correctEn);
+  document.getElementById('q-next').style.display = 'block';
+}
+
+function nextQuestion() {
+  learnIdx++;
+  if (learnIdx >= learnUnit.patterns.length) {
+    learnProgress[learnUnit.id] = 'done'; saveLearnProgress(); renderLearnDone(); return;
   }
-  learnFlipped=false; renderPattern();
+  renderQuestion();
+}
+
+function judgeLearn(ok) { // フラッシュカード互換（未使用）
+  if (ok) { learnIdx++; if (learnIdx >= learnUnit.patterns.length) { learnProgress[learnUnit.id]='done'; saveLearnProgress(); renderLearnDone(); return; } }
+  learnFlipped = false; renderPattern();
 }
 
 function renderLearnDone() {
@@ -2503,11 +2619,13 @@ function renderLearnDone() {
     :`<button class="btn btn-gray" onclick="startUnit('${learnUnit.id}')">もう一度</button>`;
   const icon=isRev?'emoji_events':'celebration';
   const iconColor=isRev?'var(--yellow)':'var(--green)';
-  const msg=isRev?`${learnUnit.patterns.length}問すべて確認しました！`:`${learnUnit.patterns.length}パターンを練習しました`;
+  const total = learnUnit.patterns.length;
+  const msg=isRev?`${total}問すべて確認しました！`:`${total}問完了`;
+  const scoreHtml = !isRev ? `<div class="score-badge">${total}問中 ${learnScore}問正解 (${Math.round(learnScore/total*100)}%)</div><br>` : '';
   el.innerHTML=`<div class="learn-done">
     <span class="material-icons big-icon" style="color:${iconColor}">${icon}</span>
     <h2 style="font-size:22px;font-weight:800;margin-bottom:8px">${learnUnit.title} 完了！</h2>
-    <p style="color:var(--muted);margin-bottom:24px">${msg}</p>
+    ${scoreHtml}<p style="color:var(--muted);margin-bottom:24px">${msg}</p>
     <div style="display:flex;gap:12px;justify-content:center">
       ${againBtn}
       <button class="btn btn-green" onclick="backToUnits()">一覧へ戻る</button>
