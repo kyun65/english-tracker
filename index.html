@@ -2583,7 +2583,7 @@ function submitInput(correctEn) {
   const userVal = inp.value.trim();
   if (!userVal) return;
   learnAnswered = true;
-  const normalize = s => s.toLowerCase().replace(/['']/g, "'").replace(/\s+/g, ' ').trim();
+  const normalize = s => s.toLowerCase().replace(/['']/g, "'").replace(/[.,!?;:'"]/g, '').replace(/\s+/g, ' ').trim();
   const isOk = normalize(userVal) === normalize(correctEn);
   if (isOk) learnScore++;
   inp.disabled = true;
