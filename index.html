@@ -397,6 +397,16 @@
     .mistake-correct { color: var(--green); font-weight: 700; }
     .tip-box { background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.6; }
     .tip-box .material-icons { color: var(--yellow); font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    /* Weak unit card */
+    .weak-card { background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.3); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: opacity .2s; }
+    .weak-card:hover { opacity: .85; }
+    .weak-card-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(245,158,11,.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    /* Preset import */
+    .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0; }
+    .preset-card { background: var(--bg3); border: 2px solid var(--border); border-radius: 12px; padding: 14px 12px; text-align: center; cursor: pointer; transition: all .2s; }
+    .preset-card:hover { border-color: var(--blue); background: rgba(37,99,235,.04); }
+    .preset-name { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
+    .preset-count { font-size: 11px; color: var(--muted); }
 
     /* Status page */
     .status-profile { background: linear-gradient(135deg, #0f2044 0%, #1e1060 100%); border-radius: 16px; padding: 20px; margin-bottom: 14px; color: #fff; }
@@ -615,6 +625,7 @@
     </div>
     <div id="plan-content"><div style="color:var(--muted);font-size:13px;padding:12px 0">読み込み中...</div></div>
   </div>
+  <div id="home-weak-unit"></div>
 </div>
 
 <!-- CALENDAR -->
@@ -701,6 +712,20 @@
         <div class="fg fg-full"><label>例文（自動生成）</label><input type="text" id="a-ex" placeholder="追加ボタンで自動生成されます"></div>
       </div>
       <button class="btn btn-blue" onclick="addWord()">追加する</button>
+    </div>
+    <div class="card" style="margin-top:0">
+      <div class="card-title">プリセットをインポート</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">単語帳の基本単語をまとめてインポートします（重複はスキップ）</p>
+      <div class="preset-grid">
+        <div class="preset-card" onclick="loadPreset('ユメタン')">
+          <div class="preset-name">ユメタン</div>
+          <div class="preset-count">60単語（Section 1〜3）</div>
+        </div>
+        <div class="preset-card" onclick="loadPreset('キクタン')">
+          <div class="preset-name">キクタン</div>
+          <div class="preset-count">40単語（Section 1〜2）</div>
+        </div>
+      </div>
     </div>
     <div class="card" style="margin-top:0">
       <div class="card-title">CSVで一括インポート</div>
@@ -864,6 +889,7 @@ function renderHome() {
   });
   prefillRecord();
   renderPlan();
+  renderWeakUnitCard();
   checkEventTrigger();
 }
 
@@ -2481,6 +2507,11 @@ function renderUnitIntro() {
         <span class="mode-label">入力問題</span>
         <span class="mode-sub">${learnUnit.patterns.length}問・打ち込んで答える</span>
       </button>
+      <button class="mode-btn" onclick="beginUnitPractice('listen')">
+        <span class="mode-icon">🎧</span>
+        <span class="mode-label">リスニング</span>
+        <span class="mode-sub">${learnUnit.patterns.length}問・聞いて日本語を選ぶ</span>
+      </button>
     </div>`;
 }
 
@@ -2536,6 +2567,7 @@ function renderQuestion() {
   if (learnIdx >= learnUnit.patterns.length) { renderLearnDone(); return; }
   learnAnswered = false;
   if (learnMode === 'input') renderInputQuestion();
+  else if (learnMode === 'listen') renderListenQuestion();
   else renderChoiceQuestion();
 }
 
@@ -2704,6 +2736,170 @@ function renderLearnDone() {
   </div>`;
 }
 
+// ── Feature 1: 弱点ユニット自動おすすめ ──
+function renderWeakUnitCard() {
+  const el = document.getElementById('home-weak-unit'); if (!el) return;
+  if (!Object.keys(unitMistakeCounts).length) { el.innerHTML = ''; return; }
+  const top = Object.entries(unitMistakeCounts).sort((a, b) => b[1] - a[1])[0];
+  const [uid, cnt] = top;
+  let unitTitle = '', grade = 0;
+  for (const g of [1, 2, 3]) {
+    const u = CURRICULUM[g].units.find(u => u.id === uid);
+    if (u) { unitTitle = u.title; grade = g; break; }
+  }
+  if (!unitTitle || cnt < 2) { el.innerHTML = ''; return; }
+  const gradeLabel = CURRICULUM[grade]?.label || '';
+  el.innerHTML = `
+    <div class="weak-card" onclick="showTab('learn');startUnit('${uid}',${grade})">
+      <div class="weak-card-icon"><span class="material-icons" style="color:var(--yellow)">lightbulb</span></div>
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">弱点強化おすすめ</div>
+        <div style="font-size:15px;font-weight:800">${unitTitle}</div>
+        <div style="font-size:12px;color:var(--muted)">${gradeLabel}・これまで${cnt}問間違えています</div>
+      </div>
+      <span class="material-icons" style="color:var(--muted)">chevron_right</span>
+    </div>`;
+}
+
+// ── Feature 2: プリセット単語 ──
+const PRESET_WORDS = {
+  ユメタン: [
+    {en:'run',ja:'走る',pos:'動詞',section:1},{en:'walk',ja:'歩く',pos:'動詞',section:1},
+    {en:'study',ja:'勉強する',pos:'動詞',section:1},{en:'eat',ja:'食べる',pos:'動詞',section:1},
+    {en:'drink',ja:'飲む',pos:'動詞',section:1},{en:'play',ja:'遊ぶ・プレーする',pos:'動詞',section:1},
+    {en:'write',ja:'書く',pos:'動詞',section:1},{en:'read',ja:'読む',pos:'動詞',section:1},
+    {en:'speak',ja:'話す',pos:'動詞',section:1},{en:'listen',ja:'聞く',pos:'動詞',section:1},
+    {en:'watch',ja:'見る',pos:'動詞',section:1},{en:'cook',ja:'料理する',pos:'動詞',section:1},
+    {en:'swim',ja:'泳ぐ',pos:'動詞',section:1},{en:'sing',ja:'歌う',pos:'動詞',section:1},
+    {en:'dance',ja:'踊る',pos:'動詞',section:1},{en:'clean',ja:'掃除する',pos:'動詞',section:1},
+    {en:'help',ja:'助ける',pos:'動詞',section:1},{en:'buy',ja:'買う',pos:'動詞',section:1},
+    {en:'sleep',ja:'眠る',pos:'動詞',section:1},{en:'teach',ja:'教える',pos:'動詞',section:1},
+    {en:'school',ja:'学校',pos:'名詞',section:2},{en:'book',ja:'本',pos:'名詞',section:2},
+    {en:'bag',ja:'かばん',pos:'名詞',section:2},{en:'food',ja:'食べ物',pos:'名詞',section:2},
+    {en:'music',ja:'音楽',pos:'名詞',section:2},{en:'sport',ja:'スポーツ',pos:'名詞',section:2},
+    {en:'friend',ja:'友達',pos:'名詞',section:2},{en:'family',ja:'家族',pos:'名詞',section:2},
+    {en:'city',ja:'都市・市',pos:'名詞',section:2},{en:'park',ja:'公園',pos:'名詞',section:2},
+    {en:'hospital',ja:'病院',pos:'名詞',section:2},{en:'station',ja:'駅',pos:'名詞',section:2},
+    {en:'restaurant',ja:'レストラン',pos:'名詞',section:2},{en:'shop',ja:'店',pos:'名詞',section:2},
+    {en:'animal',ja:'動物',pos:'名詞',section:2},{en:'flower',ja:'花',pos:'名詞',section:2},
+    {en:'weather',ja:'天気',pos:'名詞',section:2},{en:'holiday',ja:'休日',pos:'名詞',section:2},
+    {en:'dream',ja:'夢',pos:'名詞',section:2},{en:'team',ja:'チーム',pos:'名詞',section:2},
+    {en:'big',ja:'大きい',pos:'形容詞',section:3},{en:'small',ja:'小さい',pos:'形容詞',section:3},
+    {en:'new',ja:'新しい',pos:'形容詞',section:3},{en:'old',ja:'古い・年をとった',pos:'形容詞',section:3},
+    {en:'hot',ja:'暑い・熱い',pos:'形容詞',section:3},{en:'cold',ja:'寒い・冷たい',pos:'形容詞',section:3},
+    {en:'fast',ja:'速い',pos:'形容詞',section:3},{en:'slow',ja:'遅い',pos:'形容詞',section:3},
+    {en:'easy',ja:'簡単な',pos:'形容詞',section:3},{en:'difficult',ja:'難しい',pos:'形容詞',section:3},
+    {en:'beautiful',ja:'美しい',pos:'形容詞',section:3},{en:'happy',ja:'幸せな',pos:'形容詞',section:3},
+    {en:'sad',ja:'悲しい',pos:'形容詞',section:3},{en:'tired',ja:'疲れた',pos:'形容詞',section:3},
+    {en:'busy',ja:'忙しい',pos:'形容詞',section:3},{en:'tall',ja:'背が高い',pos:'形容詞',section:3},
+    {en:'long',ja:'長い',pos:'形容詞',section:3},{en:'short',ja:'短い・背が低い',pos:'形容詞',section:3},
+    {en:'important',ja:'重要な',pos:'形容詞',section:3},{en:'famous',ja:'有名な',pos:'形容詞',section:3},
+  ],
+  キクタン: [
+    {en:'remember',ja:'覚えている・思い出す',pos:'動詞',section:1},{en:'forget',ja:'忘れる',pos:'動詞',section:1},
+    {en:'arrive',ja:'到着する',pos:'動詞',section:1},{en:'leave',ja:'去る・出発する',pos:'動詞',section:1},
+    {en:'follow',ja:'従う・ついていく',pos:'動詞',section:1},{en:'wait',ja:'待つ',pos:'動詞',section:1},
+    {en:'meet',ja:'会う',pos:'動詞',section:1},{en:'bring',ja:'持ってくる',pos:'動詞',section:1},
+    {en:'find',ja:'見つける',pos:'動詞',section:1},{en:'choose',ja:'選ぶ',pos:'動詞',section:1},
+    {en:'practice',ja:'練習する',pos:'動詞',section:1},{en:'improve',ja:'上達する・改善する',pos:'動詞',section:1},
+    {en:'enjoy',ja:'楽しむ',pos:'動詞',section:1},{en:'agree',ja:'同意する',pos:'動詞',section:1},
+    {en:'finish',ja:'終える',pos:'動詞',section:1},{en:'try',ja:'試みる・努力する',pos:'動詞',section:1},
+    {en:'grow',ja:'育つ・成長する',pos:'動詞',section:1},{en:'change',ja:'変わる・変える',pos:'動詞',section:1},
+    {en:'visit',ja:'訪ねる・訪問する',pos:'動詞',section:1},{en:'support',ja:'支援する・応援する',pos:'動詞',section:1},
+    {en:'popular',ja:'人気のある',pos:'形容詞',section:2},{en:'interesting',ja:'面白い・興味深い',pos:'形容詞',section:2},
+    {en:'possible',ja:'可能な',pos:'形容詞',section:2},{en:'different',ja:'異なる',pos:'形容詞',section:2},
+    {en:'special',ja:'特別な',pos:'形容詞',section:2},{en:'safe',ja:'安全な',pos:'形容詞',section:2},
+    {en:'free',ja:'自由な・無料の',pos:'形容詞',section:2},{en:'always',ja:'いつも',pos:'副詞',section:2},
+    {en:'usually',ja:'たいてい',pos:'副詞',section:2},{en:'often',ja:'しばしば',pos:'副詞',section:2},
+    {en:'sometimes',ja:'時々',pos:'副詞',section:2},{en:'never',ja:'決して〜ない',pos:'副詞',section:2},
+    {en:'already',ja:'もう・すでに',pos:'副詞',section:2},{en:'just',ja:'ちょうど・ただ',pos:'副詞',section:2},
+    {en:'still',ja:'まだ・依然として',pos:'副詞',section:2},{en:'soon',ja:'すぐに',pos:'副詞',section:2},
+    {en:'together',ja:'一緒に',pos:'副詞',section:2},{en:'abroad',ja:'海外に・外国に',pos:'副詞',section:2},
+    {en:'suddenly',ja:'突然',pos:'副詞',section:2},{en:'carefully',ja:'注意深く・丁寧に',pos:'副詞',section:2},
+  ],
+};
+
+function loadPreset(book) {
+  const words = PRESET_WORDS[book]; if (!words) return;
+  const v = getV();
+  const existing = new Set(v.filter(w => (w.book || 'ユメタン') === book).map(w => w.en.toLowerCase()));
+  let cnt = 0;
+  words.forEach(w => {
+    if (!existing.has(w.en.toLowerCase())) {
+      v.push({id: Date.now() + Math.random(), en: w.en, ja: w.ja, pos: w.pos, book, section: w.section,
+              example: '', mastered: false, addedDate: todayStr()});
+      cnt++;
+    }
+  });
+  setV(v); renderBooks(); renderVProg();
+  showToast(cnt > 0 ? `${book}から${cnt}単語をインポートしました！` : `${book}は既にすべてインポート済みです`);
+}
+
+// ── Feature 3: リスニングモード ──
+let _listenChoices = [];
+function renderListenQuestion() {
+  const el = document.getElementById('vtab-learn-main');
+  const p = learnUnit.patterns[learnIdx];
+  const otherJa = learnUnit.patterns.filter(pat => pat.ja !== p.ja)
+    .sort(() => Math.random() - .5).slice(0, 3).map(pat => pat.ja);
+  _listenChoices = [...otherJa, p.ja].sort(() => Math.random() - .5);
+  const enEsc = p.en.replace(/'/g, "\\'");
+  el.innerHTML = makeHeader() + `
+    <div class="q-card" style="cursor:pointer" onclick="speak('${enEsc}')">
+      <span class="material-icons" style="font-size:48px;color:var(--blue);display:block;margin-bottom:10px">volume_up</span>
+      <div style="font-size:14px;font-weight:700">英語を聞いて日本語を選ぼう</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">カードをタップで再生</div>
+    </div>
+    <div class="choice-list">
+      ${_listenChoices.map((c, i) => `<button class="choice-btn" id="lc${i}" onclick="answerListen(${i})">${c}</button>`).join('')}
+    </div>
+    <div id="q-fb" style="display:none"></div>
+    <button id="q-next" class="btn btn-blue" style="width:100%;display:none" onclick="nextQuestion()">次の問題 →</button>`;
+  speak(p.en);
+}
+
+function answerListen(idx) {
+  if (learnAnswered) return;
+  learnAnswered = true;
+  const p = learnUnit.patterns[learnIdx];
+  const isOk = _listenChoices[idx] === p.ja;
+  if (isOk) learnScore++;
+  else learnMistakes.push({ja: p.ja, en: p.en, userAnswer: `「${_listenChoices[idx]}」を選択`});
+  document.querySelectorAll('.choice-btn').forEach((b, i) => {
+    b.disabled = true;
+    if (_listenChoices[i] === p.ja) b.classList.add('correct');
+  });
+  if (!isOk) document.getElementById('lc' + idx).classList.add('wrong');
+  const fb = document.getElementById('q-fb');
+  fb.style.display = 'flex'; fb.className = 'q-feedback ' + (isOk ? 'ok' : 'ng');
+  fb.innerHTML = isOk
+    ? '<span class="material-icons">check_circle</span> 正解！'
+    : `<div><span style="display:flex;align-items:center;gap:6px"><span class="material-icons">cancel</span>不正解</span><div class="correct-ans">正解: ${p.ja}（${p.en}）</div></div>`;
+  speak(p.en);
+  document.getElementById('q-next').style.display = 'block';
+}
+
+// ── Feature 4: 復習通知 ──
+function setupNotifications() {
+  if (!('Notification' in window)) return;
+  const v = getV(), today = todayStr();
+  const due = v.filter(w => !w.srsDue || w.srsDue <= today).length;
+  if (!due) return;
+  const send = () => {
+    try {
+      new Notification('English Learning 📚', {
+        body: `復習すべき単語が${due}件あります！今日も練習しましょう`,
+        icon: 'https://kyun65.github.io/english-tracker/favicon.ico',
+        tag: 'srs-reminder',
+      });
+    } catch(e) {}
+  };
+  if (Notification.permission === 'granted') send();
+  else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => { if (p === 'granted') send(); });
+  }
+}
+
 // Auth state
 auth.onAuthStateChanged(async user => {
   if (user) {
@@ -2733,6 +2929,7 @@ auth.onAuthStateChanged(async user => {
       if (lv.length > 0) { _vocab = lv; setV(lv); }
     }
     renderHome();
+    setupNotifications();
     const _n = new Date(); calY = _n.getFullYear(); calM = _n.getMonth();
   } else {
     _user = null;
